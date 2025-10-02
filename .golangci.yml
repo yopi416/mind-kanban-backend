@@ -1,0 +1,27 @@
+run:
+  timeout: 3m   # デフォルトより長めにしてタイムアウト防止
+  tests: true   # テストコードも lint 対象にする
+
+linters:
+  enable:
+    - govet         # Go標準の静的解析
+    - staticcheck   # 強力な静的解析
+    - gosimple      # 簡潔にできるコードを検出
+    - unused        # 未使用変数や関数を検出
+    - errcheck      # エラー戻り値の未処理を検出
+    - gofmt         # フォーマットチェック
+
+linters-settings:
+  gofmt:
+    simplify: true  # 簡単に書ける構文を推奨
+
+issues:
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - errcheck   # テストではエラーチェック必須にしない
+  max-same-issues: 3   # 同じ種類の指摘は最大3つに抑える
+
+output:
+  formats: colored-line-number
+  print-issued-lines: true
