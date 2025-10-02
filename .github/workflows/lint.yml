@@ -18,17 +18,8 @@ jobs:
       - name: Go mod download
         run: go mod download
 
-      - name: Run go vet
-        run: go vet ./...
-
-      - name: Install staticcheck
-        run: go install honnef.co/go/tools/cmd/staticcheck@latest
-
-      - name: Run staticcheck
-        run: $(go env GOPATH)/bin/staticcheck ./...
-
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v6
         with:
-          install-mode: goinstall   # ランナーの Go でビルド
-          version: latest           # ここは v1.xx ではなく "latest" にしておく
+          install-mode: goinstall
+          version: v2.5.0
