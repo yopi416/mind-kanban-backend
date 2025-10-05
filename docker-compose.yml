@@ -1,0 +1,57 @@
+# version: "3.9"
+
+services:
+  api:
+    image: minkan-backend:latest # イメージ名
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: minkan-api # 起動後のコンテナ名
+    ports:
+      - "8080:8080" # ホスト:コンテナ
+    # env_file:
+    #   - /config/.env
+    environment:
+      PORT: ":8080"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - api-network
+    restart: unless-stopped # コンテナが docker stop以外で 異常終了したら自動で再起動
+
+  mysql:
+    image: mysql:8.4
+    container_name: minkan-mysql
+    ports:
+      - "3306:3306"
+    # env_file:
+    #   - /config/.env
+    environment:
+      MYSQL_DATABASE: api_database
+      MYSQL_USER: app
+      MYSQL_PASSWORD: password
+      # MYSQL_ROOT_PASSWORD: root
+      MYSQL_ALLOW_EMPTY_PASSWORD: yes # 後で消す
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-proot" ]
+      # test: [ "CMD", "mysqladmin", "ping", "-h", "mysql" ]
+      interval: 3s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    volumes:
+      # 初期化SQLを置くなら（任意）
+      # - ./internal/db/init:/docker-entrypoint-initdb.d:ro
+      - db_data:/var/lib/mysql
+    networks:
+      - api-network
+    restart: unless-stopped
+    # restart: always # 停止しても必ず再起動する（手動 docker stop しても復活）
+
+networks:
+  api-network:
+    driver: bridge
+
+volumes:
+  db_data:
