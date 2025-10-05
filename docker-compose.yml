@@ -27,6 +27,8 @@ services:
       - "3306:3306"
     # env_file:
     #   - /config/.env
+
+    # 後で環境変数からの呼び出しにかえる
     environment:
       MYSQL_DATABASE: api_database
       MYSQL_USER: app
