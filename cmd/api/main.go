@@ -10,7 +10,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/yopi416/mind-kanban-backend/internal/router"
+	"github.com/yopi416/mind-kanban-backend/api"
+	"github.com/yopi416/mind-kanban-backend/internal/handler"
 )
 
 func main() {
@@ -51,7 +52,12 @@ func realMain() error {
 	// }
 	// defer todoDB.Close()
 
-	mux := router.NewRouter()
+	s := &handler.Server{}
+	mux := api.HandlerWithOptions(s, api.StdHTTPServerOptions{
+		BaseURL: "/v1",
+	})
+	// mux := api.HandlerWith(s)
+	// mux := router.NewRouter()
 
 	// graceful shutdown処理
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)

@@ -52,3 +52,10 @@ connect-db:
 
 connect-db-root:
 	docker exec -it $(DB_NAME) mysql
+
+
+# ################
+# OpenAPI
+# ################
+api-gen:
+	go tool oapi-codegen -config ./api/config.yaml ./api/openapi.yaml

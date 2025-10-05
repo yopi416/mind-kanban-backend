@@ -1,0 +1,8 @@
+package: api # Goのpackage名（生成コードのpackage名）
+generate:
+  models: true # スキーマに対応する構造体を生成
+  client: true # APIクライアントコードを生成
+  std-http-server: true # net/http用のサーバインタフェース
+  embedded-spec: true # specを埋め込みたい場合（不要ならfalseでも可）
+
+output: api/api.gen.go # 出力先（まとめて1ファイルにする例）
