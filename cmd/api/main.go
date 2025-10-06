@@ -11,22 +11,23 @@ import (
 	"time"
 
 	"github.com/yopi416/mind-kanban-backend/api"
+	"github.com/yopi416/mind-kanban-backend/configs"
 	"github.com/yopi416/mind-kanban-backend/internal/handler"
 	"github.com/yopi416/mind-kanban-backend/internal/middleware"
 )
 
-func newLogger() {
-	// isProd := os.Getenv("ENV") == "prod"
-	isProd := false
+func newLogger(cfg *configs.ConfigList) {
+	isDev := cfg.IsDevelopment()
 
 	var h slog.Handler
-	if isProd {
-		h = slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
-			Level: slog.LevelInfo,
-		})
-	} else {
+	if isDev {
 		h = slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
 			Level: slog.LevelDebug,
+		})
+	} else {
+
+		h = slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+			Level: slog.LevelInfo,
 		})
 	}
 	lg := slog.New(h).With("service", "minkan-api") // サービス名は固定で付与
@@ -43,27 +44,32 @@ func main() {
 
 func realMain() error {
 
-	// ログ設定
-	newLogger()
-
-	// config values
-	const (
-		defaultPort = ":8080"
-		// defaultDBPath = ".sqlite3/todo.db"
-	)
-
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = defaultPort
+	// 環境変数の取得
+	cfg, err := configs.LoadEnv()
+	if err != nil {
+		return err
 	}
+
+	port := cfg.Port
 
 	// dbPath := os.Getenv("DB_PATH")
 	// if dbPath == "" {
 	// 	dbPath = defaultDBPath
 	// }
 
+	// ログ設定
+	newLogger(cfg)
+
+	// 確認用ログ出力
+	slog.Debug("Environment loaded", "env", cfg.Env)
+	slog.Debug("DB config",
+		"user", cfg.DBUser,
+		"host", cfg.DBHost,
+		"port", cfg.DBPort,
+		"name", cfg.DBName,
+	)
+
 	// set time zone
-	var err error
 	time.Local, err = time.LoadLocation("Asia/Tokyo")
 	if err != nil {
 		return err
@@ -91,7 +97,7 @@ func realMain() error {
 	// )
 
 	server := &http.Server{
-		Addr:              port,
+		Addr:              ":" + port,
 		Handler:           handlerWithMW,
 		ReadTimeout:       15 * time.Second,
 		WriteTimeout:      15 * time.Second,

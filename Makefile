@@ -29,10 +29,13 @@ build:
 run:
 	docker run --rm -it -p 8080:8080 $(IMAGE_NAME)
 
-comp-build:
+up:
+	docker compose up -d
+
+up-build:
 	docker compose up -d --build
 
-comp-down:
+down:
 	docker compose down
 
 # docker compose down -v # ボリュームを削除する
