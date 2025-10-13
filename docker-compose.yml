@@ -30,22 +30,21 @@ services:
 
     # 後で環境変数からの呼び出しにかえる
     environment:
-      MYSQL_DATABASE: api_database
+      MYSQL_DATABASE: minkan
       MYSQL_USER: app
       MYSQL_PASSWORD: password
       # MYSQL_ROOT_PASSWORD: root
       MYSQL_ALLOW_EMPTY_PASSWORD: yes # 後で消す
     healthcheck:
-      test: [ "CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-proot" ]
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-proot"]
       # test: [ "CMD", "mysqladmin", "ping", "-h", "mysql" ]
       interval: 3s
       timeout: 5s
       retries: 5
       start_period: 5s
     volumes:
-      # 初期化SQLを置くなら（任意）
-      # - ./internal/db/init:/docker-entrypoint-initdb.d:ro
-      - db_data:/var/lib/mysql
+      - ./internal/db/:/docker-entrypoint-initdb.d:ro # 初回のみ実行
+      - db_data:/var/lib/mysql # 永続化（必須）
     networks:
       - api-network
     restart: unless-stopped

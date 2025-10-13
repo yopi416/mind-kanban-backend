@@ -38,6 +38,13 @@ up-build:
 down:
 	docker compose down
 
+# コンテナとボリュームを消す
+down-v:
+	docker compose down -v
+
+logs:
+	docker logs -f minkan-api
+
 # docker compose down -v # ボリュームを削除する
 
 # ################
@@ -47,7 +54,7 @@ down:
 DB_NAME = minkan-mysql
 DB_USER_NAME = app
 DB_PASSWORD = password
-DB_DATABASE = api_database
+DB_DATABASE = minkan
 
 connect-db:
 	docker exec -it $(DB_NAME) \
