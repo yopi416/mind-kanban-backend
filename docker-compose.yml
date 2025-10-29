@@ -9,8 +9,8 @@ services:
     container_name: minkan-api # 起動後のコンテナ名
     ports:
       - "8080:8080" # ホスト:コンテナ
-    # env_file:
-    #   - /config/.env
+    env_file:
+      - .env
     environment:
       PORT: ":8080"
     depends_on:
@@ -25,16 +25,16 @@ services:
     container_name: minkan-mysql
     ports:
       - "3306:3306"
-    # env_file:
-    #   - /config/.env
+    env_file:
+      - .env
 
     # 後で環境変数からの呼び出しにかえる
     environment:
-      MYSQL_DATABASE: minkan
-      MYSQL_USER: app
-      MYSQL_PASSWORD: password
-      # MYSQL_ROOT_PASSWORD: root
-      MYSQL_ALLOW_EMPTY_PASSWORD: yes # 後で消す
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      # MYSQL_ALLOW_EMPTY_PASSWORD: yes # 後で消す
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-proot"]
       # test: [ "CMD", "mysqladmin", "ping", "-h", "mysql" ]

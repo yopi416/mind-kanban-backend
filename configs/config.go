@@ -3,6 +3,7 @@ package configs
 import (
 	"os"
 	"strconv"
+	"time"
 )
 
 func GetEnvDefault(key, defVal string) string {
@@ -16,15 +17,31 @@ func GetEnvDefault(key, defVal string) string {
 }
 
 type ConfigList struct {
+	// バックエンド
 	Env                 string
-	Port                string // HTTPサーバのポート
-	DBHost              string
-	DBPort              int
-	DBDriver            string
-	DBName              string
-	DBUser              string
-	DBPassword          string
+	APIPort             string // HTTPサーバのポート
 	APICorsAllowOrigins []string
+
+	// Open Id Connect
+	OIDCGoogleIssuer       string
+	OIDCGoogleClientID     string
+	OIDCGoogleClientSecret string
+	OIDCGoogleEnablePKCE   bool
+	OIDCCookieKey          string
+	OIDCRedirectURL        string
+
+	// ログイン
+	RedirectURLAfterLogin  string
+	RedirectURLAfterLogout string
+	SessionTTL             time.Duration
+
+	// DB
+	DBHost     string
+	DBPort     int
+	DBDriver   string
+	DBName     string
+	DBUser     string
+	DBPassword string
 }
 
 func (c *ConfigList) IsDevelopment() bool {
@@ -32,21 +49,50 @@ func (c *ConfigList) IsDevelopment() bool {
 }
 
 func LoadEnv() (*ConfigList, error) {
+	// string ⇒ intに変換
 	DBPort, err := strconv.Atoi(GetEnvDefault("MYSQL_PORT", "3306"))
 	if err != nil {
 		return nil, err
 	}
 
+	// string ⇒ boolに変換
+	oidcGoogleEnablePKCE, err := strconv.ParseBool(GetEnvDefault("OIDC_GOOGLE_ENABLE_PKCE", "true"))
+	if err != nil {
+		return nil, err
+	}
+
+	// string ⇒ time.Durationに変換
+	sessionTTL, err := time.ParseDuration(GetEnvDefault("SESSION_TTL", "12h"))
+	if err != nil {
+		return nil, err
+	}
+
 	cfg := &ConfigList{
+		// バックエンド
 		Env:                 GetEnvDefault("APP_ENV", "development"),
-		Port:                GetEnvDefault("APP_PORT", "8080"),
-		DBDriver:            GetEnvDefault("DB_DRIVER", "mysql"),
-		DBHost:              GetEnvDefault("DB_HOST", "0.0.0.0"),
-		DBPort:              DBPort,
-		DBUser:              GetEnvDefault("DB_USER", "app"),
-		DBPassword:          GetEnvDefault("DB_PASSWORD", "password"),
-		DBName:              GetEnvDefault("DB_NAME", "api_database"),
+		APIPort:             GetEnvDefault("APP_PORT", "8080"),
 		APICorsAllowOrigins: []string{"http://0.0.0.0:8001"},
+
+		// Open ID Connect
+		OIDCGoogleIssuer:       GetEnvDefault("OIDC_GOOGLE_ISSUER", "https://accounts.google.com"),
+		OIDCGoogleClientID:     GetEnvDefault("OIDC_GOOGLE_CLIENT_ID", ""),
+		OIDCGoogleClientSecret: GetEnvDefault("OIDC_GOOGLE_CLIENT_SECRET", ""),
+		OIDCGoogleEnablePKCE:   oidcGoogleEnablePKCE,
+		OIDCCookieKey:          GetEnvDefault("OIDC_COOKIE_KEY", "dummykey"),
+		OIDCRedirectURL:        GetEnvDefault("OIDC_REDIRECT_URL", "http://localhost:8080/v1/auth/callback"),
+
+		// login
+		RedirectURLAfterLogin:  GetEnvDefault("REDIRECT_URL_AFTER_LOGIN", "http://localhost:5173/app/mindmap"),
+		RedirectURLAfterLogout: GetEnvDefault("REDIRECT_URL_AFTER_LOGOUT", "http://localhost:5173/login"),
+		SessionTTL:             sessionTTL,
+
+		// DB
+		DBDriver:   GetEnvDefault("DB_DRIVER", "mysql"),
+		DBHost:     GetEnvDefault("DB_HOST", "0.0.0.0"),
+		DBPort:     DBPort,
+		DBName:     GetEnvDefault("DB_NAME", "api_database"),
+		DBUser:     GetEnvDefault("DB_USER", "app"),
+		DBPassword: GetEnvDefault("DB_PASSWORD", "password"),
 	}
 
 	return cfg, nil

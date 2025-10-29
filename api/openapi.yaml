@@ -12,12 +12,15 @@ servers:
 
 tags:
   - name: Healthz
+  - name: Auth
+    description: openIdConnect認証関連
   - name: Users
     description: ユーザー関連API
   - name: Minkan
     description: MindmapとKanbanデータ関連API
 
-# security:
+security:
+  - cookieAuth: []
 #   - googleOidc: [] # スコープ不要なので空配列
 
 paths:
@@ -25,6 +28,7 @@ paths:
     get:
       tags: [Healthz]
       summary: ヘルスチェック用
+      security: []
       responses:
         "200":
           description: 疎通成功
@@ -34,6 +38,39 @@ paths:
                 $ref: "#/components/schemas/Healthz"
         "503":
           description: 利用不可
+  /auth/login:
+    get:
+      tags: [Auth]
+      summary: Redirect to IdP (Google)
+      description: 認可リクエストを生成し、Googleへ302リダイレクト
+      security: [] # ← /auth は認可不要に
+      responses:
+        "302":
+          description: Redirect to Google
+
+  /auth/callback:
+    get:
+      tags: [Auth]
+      summary: OIDC callback
+      description: 認可コード受領→トークン取得→セッション発行。完了後フロントへ302
+      security: [] # ← /auth は認可不要に
+      responses:
+        "302":
+          description: Redirect to front-end
+
+  /auth/logout:
+    post:
+      tags: [Auth]
+      summary: Logout
+      security:
+        - cookieAuth: []
+        - csrfToken: [] # ← CSRF対策を使う場合のみ
+      responses:
+        "204":
+          description: Logged out
+        "401":
+          description: 認証エラー
+          # $ref: "#/components/responses/UnauthorizedError"
 
   /users/me:
     get:
@@ -117,6 +154,12 @@ paths:
           description: 認証エラー
         "404":
           description: データが未登録
+        "409":
+          description: バージョン競合
+          # content:
+          #   application/json:
+          #     schema:
+          #       $ref: "#/components/schemas/Error"
 
 components:
   # securitySchemes:
@@ -124,6 +167,30 @@ components:
   #     type: openIdConnect
   #     openIdConnectUrl: https://accounts.google.com/.well-known/openid-configuration
 
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: minkan_session
+
+    csrfToken:
+      type: apiKey
+      in: header
+      name: X-CSRF-Token
+
+  responses:
+    UnauthorizedError:
+      description: Not authenticated
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    ForbiddenError:
+      description: Not authorized
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
   schemas:
     # --- ユーザー ---
     Healthz:
@@ -301,3 +368,12 @@ components:
         pjId: { type: string }
         nodeId: { type: string }
       required: [pjId, nodeId]
+
+    # ---エラー---
+    Error:
+      type: object
+      properties:
+        code: { type: string, example: "UNAUTHORIZED" }
+        message: { type: string, example: "authentication required" }
+        details: { type: object, additionalProperties: true }
+      required: [code, message]

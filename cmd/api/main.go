@@ -50,7 +50,7 @@ func realMain() error {
 		return err
 	}
 
-	port := cfg.Port
+	port := cfg.APIPort
 
 	// dbPath := os.Getenv("DB_PATH")
 	// if dbPath == "" {
@@ -82,7 +82,11 @@ func realMain() error {
 	// }
 	// defer todoDB.Close()
 
-	s := &handler.Server{}
+	// api.ServerInterface を取得(http.Serverではないので注意)
+	s, err := handler.NewServer(cfg)
+	if err != nil {
+		return err
+	}
 	mux := api.HandlerWithOptions(s, api.StdHTTPServerOptions{
 		BaseURL: "/v1",
 	})
