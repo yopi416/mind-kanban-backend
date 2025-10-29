@@ -66,12 +66,18 @@ paths:
         - cookieAuth: []
         - csrfToken: [] # ← CSRF対策を使う場合のみ
       responses:
-        "204":
-          description: Logged out
+        "302":
+          description: Redirect to front-end after logout
+          headers:
+            Location:
+              description: Redirect destination
+              schema:
+                type: string
         "401":
           description: 認証エラー
           # $ref: "#/components/responses/UnauthorizedError"
-
+        "403":
+          description: CSRF検証エラー
   /users/me:
     get:
       tags: [Users]
