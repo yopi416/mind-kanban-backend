@@ -23,6 +23,11 @@ import (
 	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
+const (
+	CookieAuthScopes = "cookieAuth.Scopes"
+	CsrfTokenScopes  = "csrfToken.Scopes"
+)
+
 // Edge defines model for Edge.
 type Edge struct {
 	Id string `json:"id"`
@@ -200,6 +205,15 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
+	// GetAuthCallback request
+	GetAuthCallback(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetAuthLogin request
+	GetAuthLogin(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// PostAuthLogout request
+	PostAuthLogout(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// GetHealthz request
 	GetHealthz(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -221,6 +235,42 @@ type ClientInterface interface {
 
 	// GetUsersMe request
 	GetUsersMe(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+}
+
+func (c *Client) GetAuthCallback(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetAuthCallbackRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetAuthLogin(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetAuthLoginRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PostAuthLogout(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPostAuthLogoutRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
 }
 
 func (c *Client) GetHealthz(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -317,6 +367,87 @@ func (c *Client) GetUsersMe(ctx context.Context, reqEditors ...RequestEditorFn) 
 		return nil, err
 	}
 	return c.Client.Do(req)
+}
+
+// NewGetAuthCallbackRequest generates requests for GetAuthCallback
+func NewGetAuthCallbackRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/auth/callback")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetAuthLoginRequest generates requests for GetAuthLogin
+func NewGetAuthLoginRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/auth/login")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewPostAuthLogoutRequest generates requests for PostAuthLogout
+func NewPostAuthLogoutRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/auth/logout")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
 }
 
 // NewGetHealthzRequest generates requests for GetHealthz
@@ -550,6 +681,15 @@ func WithBaseURL(baseURL string) ClientOption {
 
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
+	// GetAuthCallbackWithResponse request
+	GetAuthCallbackWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetAuthCallbackResponse, error)
+
+	// GetAuthLoginWithResponse request
+	GetAuthLoginWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetAuthLoginResponse, error)
+
+	// PostAuthLogoutWithResponse request
+	PostAuthLogoutWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*PostAuthLogoutResponse, error)
+
 	// GetHealthzWithResponse request
 	GetHealthzWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetHealthzResponse, error)
 
@@ -571,6 +711,69 @@ type ClientWithResponsesInterface interface {
 
 	// GetUsersMeWithResponse request
 	GetUsersMeWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetUsersMeResponse, error)
+}
+
+type GetAuthCallbackResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r GetAuthCallbackResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetAuthCallbackResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetAuthLoginResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r GetAuthLoginResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetAuthLoginResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type PostAuthLogoutResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r PostAuthLogoutResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r PostAuthLogoutResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
 }
 
 type GetHealthzResponse struct {
@@ -704,6 +907,33 @@ func (r GetUsersMeResponse) StatusCode() int {
 	return 0
 }
 
+// GetAuthCallbackWithResponse request returning *GetAuthCallbackResponse
+func (c *ClientWithResponses) GetAuthCallbackWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetAuthCallbackResponse, error) {
+	rsp, err := c.GetAuthCallback(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetAuthCallbackResponse(rsp)
+}
+
+// GetAuthLoginWithResponse request returning *GetAuthLoginResponse
+func (c *ClientWithResponses) GetAuthLoginWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetAuthLoginResponse, error) {
+	rsp, err := c.GetAuthLogin(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetAuthLoginResponse(rsp)
+}
+
+// PostAuthLogoutWithResponse request returning *PostAuthLogoutResponse
+func (c *ClientWithResponses) PostAuthLogoutWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*PostAuthLogoutResponse, error) {
+	rsp, err := c.PostAuthLogout(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePostAuthLogoutResponse(rsp)
+}
+
 // GetHealthzWithResponse request returning *GetHealthzResponse
 func (c *ClientWithResponses) GetHealthzWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetHealthzResponse, error) {
 	rsp, err := c.GetHealthz(ctx, reqEditors...)
@@ -772,6 +1002,54 @@ func (c *ClientWithResponses) GetUsersMeWithResponse(ctx context.Context, reqEdi
 		return nil, err
 	}
 	return ParseGetUsersMeResponse(rsp)
+}
+
+// ParseGetAuthCallbackResponse parses an HTTP response from a GetAuthCallbackWithResponse call
+func ParseGetAuthCallbackResponse(rsp *http.Response) (*GetAuthCallbackResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetAuthCallbackResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParseGetAuthLoginResponse parses an HTTP response from a GetAuthLoginWithResponse call
+func ParseGetAuthLoginResponse(rsp *http.Response) (*GetAuthLoginResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetAuthLoginResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParsePostAuthLogoutResponse parses an HTTP response from a PostAuthLogoutWithResponse call
+func ParsePostAuthLogoutResponse(rsp *http.Response) (*PostAuthLogoutResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &PostAuthLogoutResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
 }
 
 // ParseGetHealthzResponse parses an HTTP response from a GetHealthzWithResponse call
@@ -922,6 +1200,15 @@ func ParseGetUsersMeResponse(rsp *http.Response) (*GetUsersMeResponse, error) {
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+	// OIDC callback
+	// (GET /auth/callback)
+	GetAuthCallback(w http.ResponseWriter, r *http.Request)
+	// Redirect to IdP (Google)
+	// (GET /auth/login)
+	GetAuthLogin(w http.ResponseWriter, r *http.Request)
+	// Logout
+	// (POST /auth/logout)
+	PostAuthLogout(w http.ResponseWriter, r *http.Request)
 	// ヘルスチェック用
 	// (GET /healthz)
 	GetHealthz(w http.ResponseWriter, r *http.Request)
@@ -951,6 +1238,56 @@ type ServerInterfaceWrapper struct {
 
 type MiddlewareFunc func(http.Handler) http.Handler
 
+// GetAuthCallback operation middleware
+func (siw *ServerInterfaceWrapper) GetAuthCallback(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetAuthCallback(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetAuthLogin operation middleware
+func (siw *ServerInterfaceWrapper) GetAuthLogin(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetAuthLogin(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// PostAuthLogout operation middleware
+func (siw *ServerInterfaceWrapper) PostAuthLogout(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, CookieAuthScopes, []string{})
+
+	ctx = context.WithValue(ctx, CsrfTokenScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PostAuthLogout(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // GetHealthz operation middleware
 func (siw *ServerInterfaceWrapper) GetHealthz(w http.ResponseWriter, r *http.Request) {
 
@@ -968,6 +1305,12 @@ func (siw *ServerInterfaceWrapper) GetHealthz(w http.ResponseWriter, r *http.Req
 // GetMinkan operation middleware
 func (siw *ServerInterfaceWrapper) GetMinkan(w http.ResponseWriter, r *http.Request) {
 
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, CookieAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetMinkan(w, r)
 	}))
@@ -981,6 +1324,12 @@ func (siw *ServerInterfaceWrapper) GetMinkan(w http.ResponseWriter, r *http.Requ
 
 // PostMinkan operation middleware
 func (siw *ServerInterfaceWrapper) PostMinkan(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, CookieAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.PostMinkan(w, r)
@@ -996,6 +1345,12 @@ func (siw *ServerInterfaceWrapper) PostMinkan(w http.ResponseWriter, r *http.Req
 // PutMinkan operation middleware
 func (siw *ServerInterfaceWrapper) PutMinkan(w http.ResponseWriter, r *http.Request) {
 
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, CookieAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.PutMinkan(w, r)
 	}))
@@ -1010,6 +1365,12 @@ func (siw *ServerInterfaceWrapper) PutMinkan(w http.ResponseWriter, r *http.Requ
 // DeleteUsersMe operation middleware
 func (siw *ServerInterfaceWrapper) DeleteUsersMe(w http.ResponseWriter, r *http.Request) {
 
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, CookieAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.DeleteUsersMe(w, r)
 	}))
@@ -1023,6 +1384,12 @@ func (siw *ServerInterfaceWrapper) DeleteUsersMe(w http.ResponseWriter, r *http.
 
 // GetUsersMe operation middleware
 func (siw *ServerInterfaceWrapper) GetUsersMe(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, CookieAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetUsersMe(w, r)
@@ -1155,6 +1522,9 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 		ErrorHandlerFunc:   options.ErrorHandlerFunc,
 	}
 
+	m.HandleFunc("GET "+options.BaseURL+"/auth/callback", wrapper.GetAuthCallback)
+	m.HandleFunc("GET "+options.BaseURL+"/auth/login", wrapper.GetAuthLogin)
+	m.HandleFunc("POST "+options.BaseURL+"/auth/logout", wrapper.PostAuthLogout)
 	m.HandleFunc("GET "+options.BaseURL+"/healthz", wrapper.GetHealthz)
 	m.HandleFunc("GET "+options.BaseURL+"/minkan", wrapper.GetMinkan)
 	m.HandleFunc("POST "+options.BaseURL+"/minkan", wrapper.PostMinkan)
@@ -1168,34 +1538,40 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
+	"H4sIAAAAAAAC/9RZb2/bxhn/KgK3Fy0gW0qdAZ3eefaWCWlaI+mGAa4xnMWzzJjkMeSxqBcYMMnakRMn",
+	"FoLEzh+7zp8mdp3azuYh82qt/S47U7Jf5SsMzx0pUSRlSWvWoW8shby75/n9nt89f5TrUoloBtGxTi2p",
+	"cF2yStNYQ/zrb+Uyhk/DJAY2qYL5U0WGv3TWwFJBsqip6GVpLitZxDZLfLmMrZKpGFQhulSQ6ndeNN48",
+	"8hc85t1hXo15S8VRKZvcT5FZxrTz/kq3/fxBwrG5rGTia7ZiYlkqjIPzwdKmx03TE81TyeRVXKJw6u8x",
+	"Uun0X5IsaNiyULkHi+HCtNMvIn0S6SPIlC/jKTgKybICuJE6FrE2hVQLZ2MO6ETGxfRQGFdTX8Qc46uy",
+	"4TlnuEdUW9Otru61h82vfsncV8z7hnlPmHOPOdvM2eNPIIT+ittY2DpduO1X1qQ4sklUmlFJmWuNYo0/",
+	"+6UJBEm/yLXEmguUmmtnsSkFCZkmmoV/ywTwv8PjdPzuTqNEJu/qtFiEQyIDIyERAYLOES/qMv6ic7wj",
+	"vna4hYE/WcnWlWs2Lorl1LTxXFwn9fVv6xsvMiDGzMBndj4/hDNCkszZu4Ipc54wZ5nNO/z7MnN2mPMl",
+	"SMnZElbHJ5izdXz0vP74BykF0SVFn0F6Mq1oii5ryMjOcMTZ43+t11/sHh/uMm+NebvMPWTuFnP3mVcp",
+	"jjJnr3HzTX3hVkKqJds0sU7HggvXbiJy5lfM/Zp5B8xbgu+ex63EDTFnLz21zcTvYQ8SCRY3dzdj2n2v",
+	"WDrHsQKNXU2OheviAozSEzmu3ac4vjRdfkzklEokI4q6+QY7R2HdXLZT5TKIpYiQxQ18EVmv29okNmH9",
+	"bMrTGHBANZuKpP8yxVFGvOzEzwjRNKzTPstIieg02JUgpmRiRLE8zN9OEVNDVCqAP3iAKhpOk6oi9wgu",
+	"tBu10gnZaBDnuOccr9Vz8oySlJKIFWs0SOzBm0lCVIx0eKeiSaymiweBwsX1121VRZMqFqku24UGcWbT",
+	"brYFKI2H4I71G93+I4jlMu6dU94ippGZftV0pOH0F0TG/UUyzaptyP3BTVMm9zH0KOQjKtOonTNCZZ1V",
+	"QXtIp1KiVhpXi6PNIhmsykAtDGtKWgH8g4XNlNSpWIaKZj8O4tFFuVkJa0hR21gVT7I9bv0jNpUpBZ91",
+	"TSLXzbawmVZRmfuMl80df3Hh1OMdpfcSOkr3DfNqxdG3tcrx4RFzd5lXe1tbkrItd227lVM7xj+wmwwq",
+	"zDe4ZJsKnb0CUQozEJlR8LBNp7lywUPxKFQRbzNmkP5nC1sWQGhJ1lAuYq7ZkmVOfUpmsN48YxojGZut",
+	"M/40MHLl8u8GxKLECeCbok+Rji0O845EXc+8J5qh9zPDY8XBzAVCyirOfFIcHckw965f+aZxb5s5a8zZ",
+	"PNm5fbJdg4dLt+srVd68r7F5J8p2q6lP627e1m7xZv+AeVX+9wbf+ANz7zb2njaqi4OfcSwKBR1IF0hG",
+	"MDUwPFbMfIo1Q0UUaPwcm5ZAc24wP5gHwoiBdWQoUkEaGswPDkFpRHSaBySHbDqdKyFVhdYXnqSOlCc7",
+	"t/2VfeYehMPI2umTB/9evAs9GHi5z7wDf2XV/34NHrpHAMn9B/O2mHfQePjdydNlNu/6e8vH3y363y8z",
+	"7z40cgCywpzDofwHEnfSRGAOZCxdwBRUMhI6BqqzDKJbQkewJeHkZSwrJlxwSjJTJtHpANblNiVKhfGJ",
+	"rGTZmobMWakg8UiWWjYoKlugai7QCdgp+FFJWdG7kePtAA/uNnP/Cbjcu417m/VKVehASEeAhZXePFfA",
+	"t6KP7QT/I263X+zC1pnAo8uL8ljmPbHn/bM5IDZHbxCLf7a7PEas0GdYF3P6g/z5pNMfkXIZyxlYPpeV",
+	"zufPpXLL79U2n4trcVDtGWV8Yi57PZoexifm2mA3fUsBOd363SKIciIk4U8bCWz5WF+IDENVSnxv7qol",
+	"+mRRq7pVstAET1LtVDRW75zOP6pXqv7NTeDrV/mhJF8iJx0fgiLPVADzHjDvFdeqA/MUXNj9xr3tCDmh",
+	"L4IfrTkWpl4CPpm9FmkNrrjzSuQD5txn7jJzb6VpPBg1/4d8BhZS6PzkYu+ig3Xn0zCHOdpZrq/vNB4e",
+	"nS7/TbDe5LnPqVmQFglCAGBCTF00LeIbUe7rD11/b/Pk6XKCb7igEcKv2diivyHy7E/AtV/ZqK9vCn6a",
+	"pEnRTiL4pSOmg3M/gW/11dcnL1cgLpVq63L1rotfd9HF2jO4C7sP/PXtHycN4WggsnSB2Gl52f5/Rb3+",
+	"+O/11dfQIvUR8p/31e8oiCpffRh0RK/e+NXKj1QDJzdNB5CsoS23clrwnwsqpjjNqUhr2oKzzZwN5uyJ",
+	"dB/tQv2lm6cPv06klVF+PMxM1iXcU9mv7z73Dw/hVogT+6r9kQIW7az3Tufnj2uP/BsvG9XFCCvcL345",
+	"OhX1jp6/OyXygTJFh1EIdW/Bf/LX/5qLVgFIHgqx42Xlba3iVzb8x18xZ//kxo5/677QrRj84pR1a7Wg",
+	"ncAmjBv8rW2qMIlRahRyOZWUkDpNLFr4MP9hPvf5OQmWBxauh2Nas9nJxuHCxFKUR4iu4xIV2E9Xn53O",
+	"P2/NeNyP5M4ofLFleKzY2iXAJbddCiY/Z1tMfk3hp5wRJpaJuf8EAAD//+CxOeEKHAAA",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file
