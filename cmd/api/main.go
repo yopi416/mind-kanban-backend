@@ -100,6 +100,7 @@ func realMain() error {
 		OnUnauthorized:   nil, // デフォルトを利用
 	})
 
+	handlerWithMW = middleware.ApplyCORS(handlerWithMW, cfg)
 	handlerWithMW = middleware.AccessLog(handlerWithMW)
 
 	// handlerWithMW := middleware.AccessLog(
