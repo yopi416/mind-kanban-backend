@@ -67,7 +67,7 @@ func (s *Server) GetAuthCallback(w http.ResponseWriter, r *http.Request) {
 
 		// iss,subからユーザーIDを取得
 		// ⇒今は暫定でuserIDを0としておく
-		var userID int64 = 0 // TODO: 実装後に DB から実IDを取得
+		var userID int64 = 10000 // TODO: 実装後に DB から実IDを取得
 
 		// セッション発行、登録
 		sessionID := uuid.New().String()
@@ -127,6 +127,7 @@ func (s *Server) PostAuthLogout(w http.ResponseWriter, r *http.Request) {
 	sessionID := sessCookie.Value
 
 	// CSRF: ヘッダとCookieの一致を確認（ダブルサブミット）
+	// - /v1/authはCSRFトークン検証省略対象のため個別で記載
 	csrfCookie, _ := r.Cookie("csrf_token")
 	csrfHeader := r.Header.Get("X-CSRF-Token")
 	if csrfHeader == "" || csrfCookie == nil || csrfHeader != csrfCookie.Value {
@@ -150,6 +151,7 @@ func (s *Server) PostAuthLogout(w http.ResponseWriter, r *http.Request) {
 		SameSite: http.SameSiteLaxMode,
 		MaxAge:   -1,
 	})
+
 	http.SetCookie(w, &http.Cookie{
 		Name:     "csrf_token",
 		Value:    "",

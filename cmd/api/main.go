@@ -87,12 +87,20 @@ func realMain() error {
 	if err != nil {
 		return err
 	}
+
 	mux := api.HandlerWithOptions(s, api.StdHTTPServerOptions{
 		BaseURL: "/v1",
 	})
 
 	// ミドルウェア適用
-	handlerWithMW := middleware.AccessLog(mux)
+	handlerWithMW := middleware.RequireLogin(mux, middleware.RequireLoginOptions{
+		SessionManager:   s.SessionManager,
+		SkipPaths:        []string{"/v1/healthz", "/v1/auth/"},
+		RequireCSRFToken: true,
+		OnUnauthorized:   nil, // デフォルトを利用
+	})
+
+	handlerWithMW = middleware.AccessLog(handlerWithMW)
 
 	// handlerWithMW := middleware.AccessLog(
 	// 	middleware.CORS(
