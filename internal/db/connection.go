@@ -25,9 +25,9 @@ func InitDB(cfg *configs.ConfigList) (*sql.DB, error) {
 	mysqlConfig.DBName = cfg.DBName
 	mysqlConfig.ParseTime = true // TIMESTAMP型をtime.Timeに変換
 	mysqlConfig.Loc = time.Local // time.Timeへの変換時にローカルのタイムゾーンで解釈
-	mysqlConfig.Params = map[string]string{
-		"charset": "utf8mb4",
-	}
+	// mysqlConfig.Params = map[string]string{
+	// 	"charset": "utf8mb4",
+	// }
 
 	conn, err := mysql.NewConnector(mysqlConfig)
 

@@ -23,6 +23,8 @@ func NewUserRepository(DB *sql.DB) *UserRepository {
 	return &UserRepository{DB: DB}
 }
 
+// oidcのiss, subからuserIDを探す
+// userIDが見つからない場合、return, nil, nil
 func (ur *UserRepository) FindUserByOIDC(ctx context.Context, oidcIss, oidcSub string) (*User, error) {
 
 	query := `
@@ -54,6 +56,7 @@ func (ur *UserRepository) FindUserByOIDC(ctx context.Context, oidcIss, oidcSub s
 
 // 新規ユーザーを登録し、生成された user_id を返す
 func (ur *UserRepository) CreateUser(ctx context.Context, user *User) (int64, error) {
+	// user_idはAuto Incrementなので未登録でOK
 	query := `
 		INSERT INTO users (oidc_iss, oidc_sub, display_name, email, email_verified)
 		VALUES (?, ?, ?, ?, ?)

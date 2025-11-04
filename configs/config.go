@@ -89,7 +89,7 @@ func LoadEnv() (*ConfigList, error) {
 
 		// DB
 		DBDriver:   GetEnvDefault("DB_DRIVER", "mysql"),
-		DBHost:     GetEnvDefault("DB_HOST", "0.0.0.0"),
+		DBHost:     GetEnvDefault("DB_HOST", "127.0.0.1"),
 		DBPort:     GetEnvDefault("MYSQL_PORT", "3306"),
 		DBName:     GetEnvDefault("DB_NAME", "api_database"),
 		DBUser:     GetEnvDefault("DB_USER", "app"),
