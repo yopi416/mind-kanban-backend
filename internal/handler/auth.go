@@ -163,10 +163,11 @@ func (s *Server) PostAuthLogout(w http.ResponseWriter, r *http.Request) {
 	})
 
 	lg.Info("logout success")
+	w.WriteHeader(http.StatusOK)
 	// lg.Info("logout success", "session_id", sessionID)
 
 	// リダイレクト
-	redirectURL := s.RedirectURLAfterLogout
-	http.Redirect(w, r, redirectURL, http.StatusFound)
+	// redirectURL := s.RedirectURLAfterLogout
+	// http.Redirect(w, r, redirectURL, http.StatusFound)
 
 }

@@ -18,7 +18,7 @@ func (w *statusWriter) WriteHeader(code int) {
 	w.ResponseWriter.WriteHeader(code) // 元の WriteHeader をそのまま呼ぶ
 }
 
-// アクセスログ + panic リカバリ（ベーシック）
+// アクセスログ + panicからのリカバリ
 func AccessLog(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now() // 遅延計測用
@@ -35,10 +35,9 @@ func AccessLog(next http.Handler) http.Handler {
 			}
 		}()
 
-		// 次のハンドラへ
 		next.ServeHTTP(sw, r)
 
-		// 最低限のアクセスログ
+		// アクセスログ
 		slog.Info("access",
 			"method", r.Method,
 			"path", r.URL.Path,

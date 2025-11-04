@@ -66,13 +66,15 @@ paths:
         - cookieAuth: []
         - csrfToken: []
       responses:
-        "302":
-          description: Redirect to front-end after logout
-          headers:
-            Location:
-              description: Redirect destination
-              schema:
-                type: string
+        "200":
+          description: ログアウト成功（Cookie失効済み）
+        # "302":
+        #   description: Redirect to front-end after logout
+        #   headers:
+        #     Location:
+        #       description: Redirect destination
+        #       schema:
+        #         type: string
         "401":
           description: 認証エラー
           # $ref: "#/components/responses/UnauthorizedError"
