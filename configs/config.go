@@ -37,7 +37,7 @@ type ConfigList struct {
 
 	// DB
 	DBHost     string
-	DBPort     int
+	DBPort     string
 	DBDriver   string
 	DBName     string
 	DBUser     string
@@ -49,11 +49,12 @@ func (c *ConfigList) IsDevelopment() bool {
 }
 
 func LoadEnv() (*ConfigList, error) {
+
 	// string ⇒ intに変換
-	DBPort, err := strconv.Atoi(GetEnvDefault("MYSQL_PORT", "3306"))
-	if err != nil {
-		return nil, err
-	}
+	// DBPort, err := strconv.Atoi(GetEnvDefault("MYSQL_PORT", "3306"))
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	// string ⇒ boolに変換
 	oidcGoogleEnablePKCE, err := strconv.ParseBool(GetEnvDefault("OIDC_GOOGLE_ENABLE_PKCE", "true"))
@@ -88,8 +89,8 @@ func LoadEnv() (*ConfigList, error) {
 
 		// DB
 		DBDriver:   GetEnvDefault("DB_DRIVER", "mysql"),
-		DBHost:     GetEnvDefault("DB_HOST", "0.0.0.0"),
-		DBPort:     DBPort,
+		DBHost:     GetEnvDefault("DB_HOST", "127.0.0.1"),
+		DBPort:     GetEnvDefault("MYSQL_PORT", "3306"),
 		DBName:     GetEnvDefault("DB_NAME", "api_database"),
 		DBUser:     GetEnvDefault("DB_USER", "app"),
 		DBPassword: GetEnvDefault("DB_PASSWORD", "password"),

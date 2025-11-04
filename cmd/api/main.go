@@ -12,6 +12,7 @@ import (
 
 	"github.com/yopi416/mind-kanban-backend/api"
 	"github.com/yopi416/mind-kanban-backend/configs"
+	"github.com/yopi416/mind-kanban-backend/internal/db"
 	"github.com/yopi416/mind-kanban-backend/internal/handler"
 	"github.com/yopi416/mind-kanban-backend/internal/middleware"
 )
@@ -52,11 +53,6 @@ func realMain() error {
 
 	port := cfg.APIPort
 
-	// dbPath := os.Getenv("DB_PATH")
-	// if dbPath == "" {
-	// 	dbPath = defaultDBPath
-	// }
-
 	// ログ設定
 	newLogger(cfg)
 
@@ -75,15 +71,14 @@ func realMain() error {
 		return err
 	}
 
-	// set up sqlite3
-	// todoDB, err := db.NewDB(dbPath)
-	// if err != nil {
-	// 	return err
-	// }
-	// defer todoDB.Close()
+	minkanDB, err := db.InitDB(cfg)
+	if err != nil {
+		return err
+	}
+	defer minkanDB.Close()
 
 	// api.ServerInterface を取得(http.Serverではないので注意)
-	s, err := handler.NewServer(cfg)
+	s, err := handler.NewServer(cfg, minkanDB)
 	if err != nil {
 		return err
 	}

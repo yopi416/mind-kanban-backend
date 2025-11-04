@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/google/uuid"
+	"github.com/yopi416/mind-kanban-backend/internal/repository"
 	"github.com/zitadel/oidc/v3/pkg/client/rp"
 	"github.com/zitadel/oidc/v3/pkg/oidc"
 )
@@ -65,14 +66,63 @@ func (s *Server) GetAuthCallback(w http.ResponseWriter, r *http.Request) {
 		iss := claims.Issuer
 		sub := claims.Subject
 
-		// iss,subからユーザーIDを取得
+		// DisplayNameは name / email の順でフォールバック
+		displayName := claims.Email
+		if claims.Name != "" {
+			displayName = claims.Name
+		}
+
+		email := claims.Email
+		emailVerified := claims.EmailVerified
+
+		// iss,subからユーザーIDを検索
+		user, err := s.UserRepository.FindUserByOIDC(r.Context(), iss, sub)
+		if err != nil {
+			http.Error(w, "failed to find user", http.StatusInternalServerError)
+			lg.Error("find user error", "err", err)
+			return
+		}
+
+		var foundUserID int64
+
+		// ユーザーがnilの場合（未登録）、ユーザーを新規作成
+		if user == nil {
+			newUser := repository.User{
+				OIDCIss:       iss,
+				OIDCSub:       sub,
+				DisplayName:   displayName,
+				Email:         email,
+				EmailVerified: bool(emailVerified),
+			}
+			createdUserID, err := s.UserRepository.CreateUser(r.Context(), &newUser)
+
+			if err != nil {
+				http.Error(w, "failed to create user", http.StatusInternalServerError)
+				lg.Error("create user error", "err", err)
+				return
+			}
+
+			// 新規登録の場合は、作成されたuserのuserIDを取得
+			foundUserID = createdUserID
+
+		} else {
+			// ユーザーが見つかった場合は、そのユーザーIDを取得
+			foundUserID = user.UserID
+		}
+
+		// ログイン時間の最新化
+		if err := s.UserRepository.UpdateLastLoginAt(r.Context(), foundUserID); err != nil {
+			lg.Warn("update last_login_at failed", "err", err)
+			// 致命ではないので続行
+		}
+
 		// ⇒今は暫定でuserIDを0としておく
-		var userID int64 = 10000 // TODO: 実装後に DB から実IDを取得
+		// var userID int64 = 10000 // TODO: 実装後に DB から実IDを取得
 
 		// セッション発行、登録
 		sessionID := uuid.New().String()
 		sessionTTL := s.SessionManager.GetTTL()
-		s.SessionManager.CreateSession(sessionID, userID)
+		s.SessionManager.CreateSession(sessionID, foundUserID)
 
 		// クッキー付与（本番は Secure: true）
 		http.SetCookie(w, &http.Cookie{
