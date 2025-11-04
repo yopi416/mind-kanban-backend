@@ -18,9 +18,9 @@ func GetEnvDefault(key, defVal string) string {
 
 type ConfigList struct {
 	// バックエンド
-	Env                 string
-	APIPort             string // HTTPサーバのポート
-	APICorsAllowOrigins []string
+	Env              string
+	APIPort          string // HTTPサーバのポート
+	CorsAllowOrigins string // CORSで許諾するURL（フロントエンド）
 
 	// Open Id Connect
 	OIDCGoogleIssuer       string
@@ -69,9 +69,9 @@ func LoadEnv() (*ConfigList, error) {
 
 	cfg := &ConfigList{
 		// バックエンド
-		Env:                 GetEnvDefault("APP_ENV", "development"),
-		APIPort:             GetEnvDefault("APP_PORT", "8080"),
-		APICorsAllowOrigins: []string{"http://0.0.0.0:8001"},
+		Env:              GetEnvDefault("APP_ENV", "development"),
+		APIPort:          GetEnvDefault("APP_PORT", "8080"),
+		CorsAllowOrigins: GetEnvDefault("CORS_ALLOW_ORIGINS", "http://localhost:5173"),
 
 		// Open ID Connect
 		OIDCGoogleIssuer:       GetEnvDefault("OIDC_GOOGLE_ISSUER", "https://accounts.google.com"),

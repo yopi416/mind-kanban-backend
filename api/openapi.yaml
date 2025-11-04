@@ -64,14 +64,22 @@ paths:
       summary: Logout
       security:
         - cookieAuth: []
-        - csrfToken: [] # ← CSRF対策を使う場合のみ
+        - csrfToken: []
       responses:
-        "204":
-          description: Logged out
+        "200":
+          description: ログアウト成功（Cookie失効済み）
+        # "302":
+        #   description: Redirect to front-end after logout
+        #   headers:
+        #     Location:
+        #       description: Redirect destination
+        #       schema:
+        #         type: string
         "401":
           description: 認証エラー
           # $ref: "#/components/responses/UnauthorizedError"
-
+        "403":
+          description: CSRF検証エラー
   /users/me:
     get:
       tags: [Users]
@@ -90,6 +98,9 @@ paths:
       tags: [Users]
       summary: ユーザーの退会処理
       description: ユーザーデータとそのminkanデータを削除
+      security:
+        - cookieAuth: []
+        - csrfToken: []
       responses:
         "204":
           description: 正常に削除
@@ -115,6 +126,9 @@ paths:
       tags: [Minkan]
       summary: mindmap,kanban,作業中プロジェクトIDの新規登録
       description: 初ログイン時実行
+      security:
+        - cookieAuth: []
+        - csrfToken: []
       requestBody:
         description: 初期登録データ
         content:
@@ -136,6 +150,9 @@ paths:
     put:
       tags: [Minkan]
       summary: mindmap,kanban,作業中プロジェクトIDの更新
+      security:
+        - cookieAuth: []
+        - csrfToken: []
       requestBody:
         description: 更新用データ
         content:

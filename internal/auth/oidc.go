@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"encoding/base64"
 	"log/slog"
 	"net/http"
 	"time"
@@ -24,7 +25,12 @@ func NewOIDCFromEnv(cfg *configs.ConfigList) (*OIDC, error) {
 	clientSecret := cfg.OIDCGoogleClientSecret
 	enablePKCE := cfg.OIDCGoogleEnablePKCE
 	redirectURL := cfg.OIDCRedirectURL
-	cookieKey := []byte(cfg.OIDCCookieKey)
+	cookieKeyB64 := cfg.OIDCCookieKey
+	cookieKey, err := base64.StdEncoding.DecodeString(cookieKeyB64)
+
+	if err != nil {
+		return nil, err
+	}
 
 	// state 値や PKCE の code_verifier, セッション情報を暗号化・署名付き Cookieとして保管
 	// 一旦 HTTPで開発するためunsecureにするが後程変更

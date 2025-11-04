@@ -69,3 +69,9 @@ connect-db-root:
 # ################
 api-gen:
 	go tool oapi-codegen -config ./api/config.yaml ./api/openapi.yaml
+
+# ################
+# その他
+# ################
+key-gen:
+	head -c 16 /dev/urandom | base64
