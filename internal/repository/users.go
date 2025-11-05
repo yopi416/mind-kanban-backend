@@ -23,8 +23,8 @@ func NewUserRepository(DB *sql.DB) *UserRepository {
 	return &UserRepository{DB: DB}
 }
 
-// oidcのiss, subからuserIDを探す
-// userIDが見つからない場合、return, nil, nil
+// oidcのiss, subからuserDataを探す
+// 見つからない場合、return, nil, nil
 func (ur *UserRepository) FindUserByOIDC(ctx context.Context, oidcIss, oidcSub string) (*User, error) {
 
 	query := `
@@ -34,6 +34,37 @@ func (ur *UserRepository) FindUserByOIDC(ctx context.Context, oidcIss, oidcSub s
 	`
 
 	row := ur.DB.QueryRowContext(ctx, query, oidcIss, oidcSub)
+	user := &User{}
+	err := row.Scan(
+		&user.UserID,
+		&user.OIDCIss,
+		&user.OIDCSub,
+		&user.DisplayName,
+		&user.Email,
+		&user.EmailVerified,
+	)
+
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, nil // 該当ユーザーなし
+	}
+
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
+}
+
+// userIDからuserを探す
+// userIDが見つからない場合、return, nil, nil
+func (ur *UserRepository) FindUserByUserID(ctx context.Context, userID int64) (*User, error) {
+
+	query := `
+		SELECT user_id, oidc_iss, oidc_sub, display_name, email, email_verified
+		FROM users
+		WHERE user_id = ?
+	`
+
+	row := ur.DB.QueryRowContext(ctx, query, userID)
 	user := &User{}
 	err := row.Scan(
 		&user.UserID,
