@@ -43,7 +43,7 @@ func (s *Server) GetAuthCallback(w http.ResponseWriter, r *http.Request) {
 	lg := slog.Default().With("handler", "GetAuthCallback")
 
 	// 念のための nil ガード
-	if s.OIDC == nil || s.OIDC.RP == nil || s.SessionManager == nil {
+	if s.OIDC == nil || s.OIDC.RP == nil || s.SessionManager == nil || s.UserRepository == nil {
 		http.Error(w, "server not initialized", http.StatusInternalServerError)
 		lg.Error("missing dependency",
 			"hasOIDC", s.OIDC != nil,

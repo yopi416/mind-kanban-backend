@@ -21,6 +21,7 @@ tags:
 
 security:
   - cookieAuth: []
+  # - csrfToken: []
 #   - googleOidc: [] # スコープ不要なので空配列
 
 paths:
@@ -93,6 +94,8 @@ paths:
                 $ref: "#/components/schemas/User"
         "401":
           description: 認証エラー
+        "404":
+          description: ユーザーデータが見つからない
 
     delete:
       tags: [Users]
@@ -106,6 +109,8 @@ paths:
           description: 正常に削除
         "401":
           description: 認証エラー
+        "403":
+          description: CSRF検証エラー
   /minkan:
     get:
       tags: [Minkan]
@@ -145,6 +150,8 @@ paths:
                 $ref: "#/components/schemas/Minkan"
         "401":
           description: 認証エラー
+        "403":
+          description: CSRF検証エラー
         "409":
           description: データが既に存在
     put:
@@ -169,6 +176,8 @@ paths:
                 $ref: "#/components/schemas/Minkan"
         "401":
           description: 認証エラー
+        "403":
+          description: CSRF検証エラー
         "404":
           description: データが未登録
         "409":
@@ -220,21 +229,21 @@ components:
     User:
       type: object
       properties:
-        userId:
-          type: string
-          format: uuid
-          description: アプリ内部のユーザーID（主キー）
+        # userId:
+        #   type: string
+        #   format: uuid
+        #   description: アプリ内部のユーザーID（主キー）
         email:
           type: string
-          format: email
+          # format: email
           nullable: true # trueの場合nullを許容
-        emailVerified:
-          type: boolean
-          nullable: true
+        # emailVerified:
+        #   type: boolean
+        #   nullable: true
         displayName:
           type: string
           nullable: true
-      required: [userId]
+      required: [email, displayName]
 
     # --- minkan ---
     Minkan:
