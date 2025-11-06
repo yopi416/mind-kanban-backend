@@ -17,7 +17,6 @@ import (
 	"net/url"
 	"path"
 	"strings"
-	"time"
 
 	"github.com/getkin/kin-openapi/openapi3"
 )
@@ -27,93 +26,34 @@ const (
 	CsrfTokenScopes  = "csrfToken.Scopes"
 )
 
-// Edge defines model for Edge.
-type Edge struct {
-	Id string `json:"id"`
-
-	// Source 接続元ノードID
-	Source string `json:"source"`
-
-	// Target 接続先ノードID
-	Target string `json:"target"`
-	Type   string `json:"type"`
-}
-
 // Healthz defines model for Healthz.
 type Healthz struct {
 	Message string `json:"message"`
 }
 
-// KanbanCardRef defines model for KanbanCardRef.
-type KanbanCardRef struct {
-	NodeId string `json:"nodeId"`
-	PjId   string `json:"pjId"`
+// MinkanGetRes Minkan + version(GET/minkanのresボディ)
+type MinkanGetRes struct {
+	// Minkan Raw JSON blob of Minkan state
+	Minkan json.RawMessage `json:"minkan"`
+
+	// Version 楽観ロック用version
+	Version int64 `json:"version"`
 }
 
-// KanbanColumns 各カラムごとのカード参照配列
-type KanbanColumns struct {
-	Backlog []KanbanCardRef `json:"backlog"`
-	Doing   []KanbanCardRef `json:"doing"`
-	Done    []KanbanCardRef `json:"done"`
-	Todo    []KanbanCardRef `json:"todo"`
+// MinkanPutReq Minkan + version(PUT/minkanのreqボディ)
+type MinkanPutReq struct {
+	// Minkan Raw JSON blob of Minkan state
+	Minkan json.RawMessage `json:"minkan"`
+
+	// Version 楽観ロック用version
+	Version int64 `json:"version"`
 }
 
-// KanbanIndex 本来 pjId -> nodeIdのSetだが、Setがないのでstring[]で代替
-type KanbanIndex map[string][]string
-
-// Minkan mindmap,kanban,作業中プロジェクトIDの状態
-type Minkan struct {
-	// CurrentPjId 作業中マインドマッププロジェクトのID
-	CurrentPjId string `json:"currentPjId"`
-
-	// KanbanColumns 各カラムごとのカード参照配列
-	KanbanColumns KanbanColumns `json:"kanbanColumns"`
-
-	// KanbanIndex 本来 pjId -> nodeIdのSetだが、Setがないのでstring[]で代替
-	KanbanIndex KanbanIndex `json:"kanbanIndex"`
-
-	// Projects pjID -> Project のマップ
-	Projects Projects `json:"projects"`
+// MinkanPutRes Minkan + version(PUT/minkanのreqボディ)
+type MinkanPutRes struct {
+	// Version 楽観ロック用version
+	Version int64 `json:"version"`
 }
-
-// Node defines model for Node.
-type Node struct {
-	Data     NodeData `json:"data"`
-	Id       string   `json:"id"`
-	Position struct {
-		X float32 `json:"x"`
-		Y float32 `json:"y"`
-	} `json:"position"`
-	Type string `json:"type"`
-}
-
-// NodeComment defines model for NodeComment.
-type NodeComment struct {
-	Content   string    `json:"content"`
-	CreatedAt time.Time `json:"createdAt"`
-	Id        string    `json:"id"`
-}
-
-// NodeData defines model for NodeData.
-type NodeData struct {
-	Comments []NodeComment `json:"comments"`
-	IsDone   bool          `json:"isDone"`
-	Label    string        `json:"label"`
-	ParentId *string       `json:"parentId"`
-}
-
-// Project defines model for Project.
-type Project struct {
-	CreatedAt time.Time `json:"createdAt"`
-	Edges     []Edge    `json:"edges"`
-	Id        string    `json:"id"`
-	Name      string    `json:"name"`
-	Nodes     []Node    `json:"nodes"`
-	UpdatedAt time.Time `json:"updatedAt"`
-}
-
-// Projects pjID -> Project のマップ
-type Projects map[string]Project
 
 // User defines model for User.
 type User struct {
@@ -121,11 +61,8 @@ type User struct {
 	Email       *string `json:"email"`
 }
 
-// PostMinkanJSONRequestBody defines body for PostMinkan for application/json ContentType.
-type PostMinkanJSONRequestBody = Minkan
-
 // PutMinkanJSONRequestBody defines body for PutMinkan for application/json ContentType.
-type PutMinkanJSONRequestBody = Minkan
+type PutMinkanJSONRequestBody = MinkanPutReq
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
@@ -215,11 +152,6 @@ type ClientInterface interface {
 	// GetMinkan request
 	GetMinkan(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// PostMinkanWithBody request with any body
-	PostMinkanWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	PostMinkan(ctx context.Context, body PostMinkanJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
-
 	// PutMinkanWithBody request with any body
 	PutMinkanWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -282,30 +214,6 @@ func (c *Client) GetHealthz(ctx context.Context, reqEditors ...RequestEditorFn) 
 
 func (c *Client) GetMinkan(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetMinkanRequest(c.Server)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) PostMinkanWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewPostMinkanRequestWithBody(c.Server, contentType, body)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) PostMinkan(ctx context.Context, body PostMinkanJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewPostMinkanRequest(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -499,46 +407,6 @@ func NewGetMinkanRequest(server string) (*http.Request, error) {
 	return req, nil
 }
 
-// NewPostMinkanRequest calls the generic PostMinkan builder with application/json body
-func NewPostMinkanRequest(server string, body PostMinkanJSONRequestBody) (*http.Request, error) {
-	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
-	if err != nil {
-		return nil, err
-	}
-	bodyReader = bytes.NewReader(buf)
-	return NewPostMinkanRequestWithBody(server, "application/json", bodyReader)
-}
-
-// NewPostMinkanRequestWithBody generates requests for PostMinkan with any type of body
-func NewPostMinkanRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
-	var err error
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/minkan")
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest("POST", queryURL.String(), body)
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Add("Content-Type", contentType)
-
-	return req, nil
-}
-
 // NewPutMinkanRequest calls the generic PutMinkan builder with application/json body
 func NewPutMinkanRequest(server string, body PutMinkanJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
@@ -691,11 +559,6 @@ type ClientWithResponsesInterface interface {
 	// GetMinkanWithResponse request
 	GetMinkanWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetMinkanResponse, error)
 
-	// PostMinkanWithBodyWithResponse request with any body
-	PostMinkanWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostMinkanResponse, error)
-
-	PostMinkanWithResponse(ctx context.Context, body PostMinkanJSONRequestBody, reqEditors ...RequestEditorFn) (*PostMinkanResponse, error)
-
 	// PutMinkanWithBodyWithResponse request with any body
 	PutMinkanWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutMinkanResponse, error)
 
@@ -796,7 +659,7 @@ func (r GetHealthzResponse) StatusCode() int {
 type GetMinkanResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *Minkan
+	JSON200      *MinkanGetRes
 }
 
 // Status returns HTTPResponse.Status
@@ -815,32 +678,10 @@ func (r GetMinkanResponse) StatusCode() int {
 	return 0
 }
 
-type PostMinkanResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON201      *Minkan
-}
-
-// Status returns HTTPResponse.Status
-func (r PostMinkanResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r PostMinkanResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
 type PutMinkanResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *Minkan
+	JSON204      *MinkanPutRes
 }
 
 // Status returns HTTPResponse.Status
@@ -945,23 +786,6 @@ func (c *ClientWithResponses) GetMinkanWithResponse(ctx context.Context, reqEdit
 		return nil, err
 	}
 	return ParseGetMinkanResponse(rsp)
-}
-
-// PostMinkanWithBodyWithResponse request with arbitrary body returning *PostMinkanResponse
-func (c *ClientWithResponses) PostMinkanWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostMinkanResponse, error) {
-	rsp, err := c.PostMinkanWithBody(ctx, contentType, body, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParsePostMinkanResponse(rsp)
-}
-
-func (c *ClientWithResponses) PostMinkanWithResponse(ctx context.Context, body PostMinkanJSONRequestBody, reqEditors ...RequestEditorFn) (*PostMinkanResponse, error) {
-	rsp, err := c.PostMinkan(ctx, body, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParsePostMinkanResponse(rsp)
 }
 
 // PutMinkanWithBodyWithResponse request with arbitrary body returning *PutMinkanResponse
@@ -1088,37 +912,11 @@ func ParseGetMinkanResponse(rsp *http.Response) (*GetMinkanResponse, error) {
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest Minkan
+		var dest MinkanGetRes
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
-
-	}
-
-	return response, nil
-}
-
-// ParsePostMinkanResponse parses an HTTP response from a PostMinkanWithResponse call
-func ParsePostMinkanResponse(rsp *http.Response) (*PostMinkanResponse, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &PostMinkanResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
-		var dest Minkan
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON201 = &dest
 
 	}
 
@@ -1139,12 +937,12 @@ func ParsePutMinkanResponse(rsp *http.Response) (*PutMinkanResponse, error) {
 	}
 
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest Minkan
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 204:
+		var dest MinkanPutRes
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
-		response.JSON200 = &dest
+		response.JSON204 = &dest
 
 	}
 
@@ -1210,9 +1008,6 @@ type ServerInterface interface {
 	// mindmap,kanban,作業中プロジェクトIDの取得
 	// (GET /minkan)
 	GetMinkan(w http.ResponseWriter, r *http.Request)
-	// mindmap,kanban,作業中プロジェクトIDの新規登録
-	// (POST /minkan)
-	PostMinkan(w http.ResponseWriter, r *http.Request)
 	// mindmap,kanban,作業中プロジェクトIDの更新
 	// (PUT /minkan)
 	PutMinkan(w http.ResponseWriter, r *http.Request)
@@ -1308,28 +1103,6 @@ func (siw *ServerInterfaceWrapper) GetMinkan(w http.ResponseWriter, r *http.Requ
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetMinkan(w, r)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// PostMinkan operation middleware
-func (siw *ServerInterfaceWrapper) PostMinkan(w http.ResponseWriter, r *http.Request) {
-
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, CookieAuthScopes, []string{})
-
-	ctx = context.WithValue(ctx, CsrfTokenScopes, []string{})
-
-	r = r.WithContext(ctx)
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.PostMinkan(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -1528,7 +1301,6 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc("POST "+options.BaseURL+"/auth/logout", wrapper.PostAuthLogout)
 	m.HandleFunc("GET "+options.BaseURL+"/healthz", wrapper.GetHealthz)
 	m.HandleFunc("GET "+options.BaseURL+"/minkan", wrapper.GetMinkan)
-	m.HandleFunc("POST "+options.BaseURL+"/minkan", wrapper.PostMinkan)
 	m.HandleFunc("PUT "+options.BaseURL+"/minkan", wrapper.PutMinkan)
 	m.HandleFunc("DELETE "+options.BaseURL+"/users/me", wrapper.DeleteUsersMe)
 	m.HandleFunc("GET "+options.BaseURL+"/users/me", wrapper.GetUsersMe)
@@ -1539,40 +1311,32 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
+	"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",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

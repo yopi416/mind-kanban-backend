@@ -122,38 +122,38 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Minkan"
+                $ref: "#/components/schemas/MinkanGetRes"
         "401":
           description: 認証エラー
         "404":
           description: データが未登録
-    post:
-      tags: [Minkan]
-      summary: mindmap,kanban,作業中プロジェクトIDの新規登録
-      description: 初ログイン時実行
-      security:
-        - cookieAuth: []
-        - csrfToken: []
-      requestBody:
-        description: 初期登録データ
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/Minkan"
-        required: true
-      responses:
-        "201":
-          description: 新規作成成功
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Minkan"
-        "401":
-          description: 認証エラー
-        "403":
-          description: CSRF検証エラー
-        "409":
-          description: データが既に存在
+    # post:
+    #   tags: [Minkan]
+    #   summary: mindmap,kanban,作業中プロジェクトIDの新規登録
+    #   description: 初ログイン時実行
+    #   security:
+    #     - cookieAuth: []
+    #     - csrfToken: []
+    #   requestBody:
+    #     description: 初期登録データ
+    #     content:
+    #       application/json:
+    #         schema:
+    #           $ref: "#/components/schemas/Minkan"
+    #     required: true
+    #   responses:
+    #     "201":
+    #       description: 新規作成成功
+    #       content:
+    #         application/json:
+    #           schema:
+    #             $ref: "#/components/schemas/Minkan"
+    #     "401":
+    #       description: 認証エラー
+    #     "403":
+    #       description: CSRF検証エラー
+    #     "409":
+    #       description: データが既に存在
     put:
       tags: [Minkan]
       summary: mindmap,kanban,作業中プロジェクトIDの更新
@@ -165,15 +165,15 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Minkan"
+              $ref: "#/components/schemas/MinkanPutReq"
         required: true
       responses:
-        "200":
+        "204":
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Minkan"
+                $ref: "#/components/schemas/MinkanPutRes"
         "401":
           description: 認証エラー
         "403":
@@ -246,6 +246,59 @@ components:
       required: [email, displayName]
 
     # --- minkan ---
+    MinkanGetRes:
+      type: object
+      description: Minkan + version(GET/minkanのresボディ)
+      properties:
+        minkan:
+          type: object
+          additionalProperties: true
+          x-go-type: json.RawMessage
+          description: "Raw JSON blob of Minkan state"
+          # $ref: "#/components/schemas/Minkan"
+        version:
+          type: integer
+          format: int64
+          description: 楽観ロック用version
+      required: [minkan, version]
+
+    MinkanPutReq:
+      type: object
+      description: Minkan + version(PUT/minkanのreqボディ)
+      properties:
+        minkan:
+          type: object
+          additionalProperties: true
+          x-go-type: json.RawMessage
+          description: "Raw JSON blob of Minkan state"
+          # $ref: "#/components/schemas/Minkan"
+        version:
+          type: integer
+          format: int64
+          description: 楽観ロック用version
+      required: [minkan, version]
+
+    MinkanPutRes:
+      type: object
+      description: Minkan + version(PUT/minkanのreqボディ)
+      properties:
+        # minkan:
+        # type: object
+        # additionalProperties: true
+        # x-go-type: json.RawMessage
+        # description: "Raw JSON blob of Minkan state"
+        # $ref: "#/components/schemas/Minkan"
+        version:
+          type: integer
+          format: int64
+          description: 楽観ロック用version
+      required: [version]
+
+    # #################
+    # MinkanGet,Put系をadditionalProperties: trueとしたため以降の記載が不要になった
+    # 呼び出されないschemasはapi.gen.goの構造性生成対象外なので、今後のために一応残す
+    # ################
+
     Minkan:
       type: object
       description: mindmap,kanban,作業中プロジェクトIDの状態
