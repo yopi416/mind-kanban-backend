@@ -2,11 +2,13 @@ package handler
 
 import (
 	"encoding/json"
+	"errors"
 	"log/slog"
 	"net/http"
 
 	"github.com/yopi416/mind-kanban-backend/api"
 	"github.com/yopi416/mind-kanban-backend/internal/middleware"
+	"github.com/yopi416/mind-kanban-backend/internal/repository"
 )
 
 // あるユーザーのminkan_statesのjsonとversion(楽観ロック用）を取得しレスポンス
@@ -46,7 +48,7 @@ func (s *Server) GetMinkan(w http.ResponseWriter, r *http.Request) {
 		Version: minkanState.Version,
 	}
 
-	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
 
 	// Go構造体をJSONエンコードして書き込み
@@ -75,17 +77,51 @@ func (s *Server) PutMinkan(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// ContextからUserIDを取得
-	// userID, ok := middleware.GetUserIDFromContext(r.Context())
+	userID, ok := middleware.GetUserIDFromContext(r.Context())
 
-	// if !ok {
-	// 	http.Error(w, "unauthorized", http.StatusUnauthorized)
-	// 	lg.Warn("userID not found in context")
-	// 	return
-	// }
+	if !ok {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		lg.Warn("userID not found in context")
+		return
+	}
 
-	// 楽観ロック判定
+	// リクエストボディから、minkanデータとversionを取得
+	defer r.Body.Close()
 
-	// 置き換えた後のversionは返さないとかも(楽観ロック用)
+	var reqBody api.MinkanPutReq
+	err := json.NewDecoder(r.Body).Decode(&reqBody)
 
-	http.Error(w, "not implemented", http.StatusNotImplemented)
+	if err != nil {
+		http.Error(w, "invalid request body", http.StatusBadRequest)
+		lg.Warn("decode error", "err", err)
+		return
+	}
+
+	// minkanデータとversion + 1をDBに登録
+	err = s.MinkanStatesRepository.UpdateStateByUserID(r.Context(), reqBody.Minkan, userID, reqBody.Version)
+
+	if errors.Is(err, repository.ErrOptimisticLock) {
+		http.Error(w, "version conflict", http.StatusConflict)
+		lg.Warn("optimistic lock error", "err", err)
+		return
+	}
+
+	if err != nil {
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		lg.Error("update state error", "err", err)
+		return
+	}
+
+	// 置き換えた後のversionを返す
+	resBody := api.MinkanPutRes{
+		Version: reqBody.Version + 1,
+	}
+
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(http.StatusOK)
+
+	if err := json.NewEncoder(w).Encode(resBody); err != nil {
+		lg.Error("failed to encode MinkanPutRes", "err", err)
+	}
+
 }

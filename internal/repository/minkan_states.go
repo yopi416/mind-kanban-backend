@@ -127,15 +127,15 @@ func (msr *MinkanStatesRepository) FindStateByUserID(ctx context.Context, userID
 }
 
 // jsonデータを受け取り、userIDに対応するminkan_statesを更新
-func (msr *MinkanStatesRepository) UpdateStateByUserID(ctx context.Context, newStateJSON []byte, userID int64) error {
+func (msr *MinkanStatesRepository) UpdateStateByUserID(ctx context.Context, newStateJSON json.RawMessage, userID, version int64) error {
 
 	query := `
 		UPDATE minkan_states
 		SET state_json = ?, version = version + 1
-		WHERE user_id = ?
+		WHERE user_id = ? AND version = ?
 	`
 
-	res, err := msr.DB.ExecContext(ctx, query, newStateJSON, userID)
+	res, err := msr.DB.ExecContext(ctx, query, newStateJSON, userID, version)
 
 	if err != nil {
 		return err
@@ -149,7 +149,7 @@ func (msr *MinkanStatesRepository) UpdateStateByUserID(ctx context.Context, newS
 
 	// 更新行が0行の時
 	if rows == 0 {
-		return sql.ErrNoRows
+		return ErrOptimisticLock
 	}
 
 	return nil

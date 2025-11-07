@@ -53,7 +53,7 @@ func (s *Server) GetUsersMe(w http.ResponseWriter, r *http.Request) {
 		// UserId:
 	}
 
-	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
 
 	if err := json.NewEncoder(w).Encode(response); err != nil {

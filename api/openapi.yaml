@@ -168,7 +168,7 @@ paths:
               $ref: "#/components/schemas/MinkanPutReq"
         required: true
       responses:
-        "204":
+        "200":
           description: OK
           content:
             application/json:
@@ -181,7 +181,7 @@ paths:
         "404":
           description: データが未登録
         "409":
-          description: バージョン競合
+          description: 楽観ロックエラー
           # content:
           #   application/json:
           #     schema:
