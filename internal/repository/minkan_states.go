@@ -15,7 +15,7 @@ type MinkanState struct {
 	UserID        int64           `json:"user_id"`
 	StateJSON     json.RawMessage `json:"state_json"`
 	SchemaVersion int             `json:"schema_version"`
-	Version       int64           `json:"version"`
+	Version       int32           `json:"version"`
 	UpdatedAt     time.Time       `json:"updated_at"`
 }
 
@@ -49,7 +49,7 @@ func (msr *MinkanStatesRepository) InitState(ctx context.Context, tx *sql.Tx, us
 		Id:   rootNodeID,
 		Type: defaultNodeType,
 		Data: NodeData{
-			Label:    "input",
+			Label:    "ここに文字を入力",
 			ParentId: nil,
 			IsDone:   false,
 			Comments: []NodeComment{},
@@ -127,7 +127,7 @@ func (msr *MinkanStatesRepository) FindStateByUserID(ctx context.Context, userID
 }
 
 // jsonデータを受け取り、userIDに対応するminkan_statesを更新
-func (msr *MinkanStatesRepository) UpdateStateByUserID(ctx context.Context, newStateJSON json.RawMessage, userID, version int64) error {
+func (msr *MinkanStatesRepository) UpdateStateByUserID(ctx context.Context, newStateJSON json.RawMessage, userID int64, version int32) error {
 
 	query := `
 		UPDATE minkan_states

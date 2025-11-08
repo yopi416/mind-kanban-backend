@@ -53,7 +53,7 @@ func (s *Server) GetAuthCallback(w http.ResponseWriter, r *http.Request) {
 
 	// 念のための nil ガード
 	if s.OIDC == nil || s.OIDC.RP == nil || s.SessionManager == nil || s.UserRepository == nil {
-		http.Error(w, "server not initialized", http.StatusInternalServerError)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
 		lg.Error("missing dependency",
 			"hasOIDC", s.OIDC != nil,
 			"hasRP", s.OIDC != nil && s.OIDC.RP != nil,
@@ -87,7 +87,7 @@ func (s *Server) GetAuthCallback(w http.ResponseWriter, r *http.Request) {
 		// iss,subからユーザーIDを検索
 		user, err := s.UserRepository.FindUserByOIDC(r.Context(), iss, sub)
 		if err != nil {
-			http.Error(w, "failed to find user", http.StatusInternalServerError)
+			http.Error(w, "internal server error", http.StatusInternalServerError)
 			lg.Error("find user error", "err", err)
 			return
 		}

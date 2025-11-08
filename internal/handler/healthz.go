@@ -20,7 +20,7 @@ func (s *Server) GetHealthz(w http.ResponseWriter, r *http.Request) {
 	err := json.NewEncoder(w).Encode(response)
 
 	if err != nil {
-		http.Error(w, "failed to encode response", http.StatusInternalServerError)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
 		lg.Error("healthz encode error", "err", err)
 		return
 	}

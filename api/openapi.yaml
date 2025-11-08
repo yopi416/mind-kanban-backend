@@ -37,8 +37,8 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Healthz"
-        "503":
-          description: 利用不可
+        "500":
+          description: サーバエラー
   /auth/login:
     get:
       tags: [Auth]
@@ -48,6 +48,8 @@ paths:
       responses:
         "302":
           description: Redirect to Google
+        "500":
+          description: サーバエラー
 
   /auth/callback:
     get:
@@ -58,6 +60,8 @@ paths:
       responses:
         "302":
           description: Redirect to front-end
+        "500":
+          description: サーバエラー
 
   /auth/logout:
     post:
@@ -96,6 +100,8 @@ paths:
           description: 認証エラー
         "404":
           description: ユーザーデータが見つからない
+        "500":
+          description: サーバエラー
 
     delete:
       tags: [Users]
@@ -111,6 +117,8 @@ paths:
           description: 認証エラー
         "403":
           description: CSRF検証エラー
+        "500":
+          description: サーバエラー
   /minkan:
     get:
       tags: [Minkan]
@@ -127,33 +135,8 @@ paths:
           description: 認証エラー
         "404":
           description: データが未登録
-    # post:
-    #   tags: [Minkan]
-    #   summary: mindmap,kanban,作業中プロジェクトIDの新規登録
-    #   description: 初ログイン時実行
-    #   security:
-    #     - cookieAuth: []
-    #     - csrfToken: []
-    #   requestBody:
-    #     description: 初期登録データ
-    #     content:
-    #       application/json:
-    #         schema:
-    #           $ref: "#/components/schemas/Minkan"
-    #     required: true
-    #   responses:
-    #     "201":
-    #       description: 新規作成成功
-    #       content:
-    #         application/json:
-    #           schema:
-    #             $ref: "#/components/schemas/Minkan"
-    #     "401":
-    #       description: 認証エラー
-    #     "403":
-    #       description: CSRF検証エラー
-    #     "409":
-    #       description: データが既に存在
+        "500":
+          description: サーバエラー
     put:
       tags: [Minkan]
       summary: mindmap,kanban,作業中プロジェクトIDの更新
@@ -182,10 +165,8 @@ paths:
           description: データが未登録
         "409":
           description: 楽観ロックエラー
-          # content:
-          #   application/json:
-          #     schema:
-          #       $ref: "#/components/schemas/Error"
+        "500":
+          description: サーバエラー
 
 components:
   # securitySchemes:
@@ -258,7 +239,7 @@ components:
           # $ref: "#/components/schemas/Minkan"
         version:
           type: integer
-          format: int64
+          format: int32 # 64bitをFEが受けられないため
           description: 楽観ロック用version
       required: [minkan, version]
 
@@ -274,7 +255,7 @@ components:
           # $ref: "#/components/schemas/Minkan"
         version:
           type: integer
-          format: int64
+          format: int32 # 64bitをFEが受けられないため
           description: 楽観ロック用version
       required: [minkan, version]
 
@@ -290,7 +271,7 @@ components:
         # $ref: "#/components/schemas/Minkan"
         version:
           type: integer
-          format: int64
+          format: int32 # 64bitをFEが受けられないため
           description: 楽観ロック用version
       required: [version]
 
