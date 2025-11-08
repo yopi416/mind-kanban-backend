@@ -2,29 +2,29 @@ package handler
 
 import (
 	"encoding/json"
-	"log"
+	"log/slog"
 	"net/http"
 
-	"github.com/yopi416/mind-kanban-backend/internal/model"
+	"github.com/yopi416/mind-kanban-backend/api"
 )
 
-// A HealthzHandler implements health check endpoint.
-type HealthzHandler struct{}
+func (s *Server) GetHealthz(w http.ResponseWriter, r *http.Request) {
+	// 追加属性は必要に応じてWith
+	lg := slog.Default().With("handler", "GetHealthz")
 
-// NewHealthzHandler returns HealthzHandler based http.Handler.
-func NewHealthzHandler() *HealthzHandler {
-	return &HealthzHandler{}
-}
+	// レスポンスヘッダを一応明示
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
 
-// ServeHTTP implements http.Handler interface.
-func (h *HealthzHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-
-	response := &model.HealthzResponse{Message: "OK"}
+	response := api.Healthz{Message: "health check OK"}
 	err := json.NewEncoder(w).Encode(response)
 
 	if err != nil {
-		http.Error(w, "failed to encode response", http.StatusInternalServerError)
-		log.Println("healthz encode error:", err)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		lg.Error("healthz encode error", "err", err)
 		return
 	}
+
+	// 正常時は Info ログを出力
+	lg.Info("health check ok")
 }

@@ -1,0 +1,439 @@
+openapi: 3.0.3
+
+info:
+  title: Go minkan-API Template
+  version: 1.0.0
+  description: >
+    mindmap・Kanban (Minkan) API.
+    Google OIDC を利用した認証を前提とし、ユーザーごとのマインドマップ＋カンバンデータを管理.
+
+servers:
+  - url: http://localhost:8080/v1
+
+tags:
+  - name: Healthz
+  - name: Auth
+    description: openIdConnect認証関連
+  - name: Users
+    description: ユーザー関連API
+  - name: Minkan
+    description: MindmapとKanbanデータ関連API
+
+security:
+  - cookieAuth: []
+  # - csrfToken: []
+#   - googleOidc: [] # スコープ不要なので空配列
+
+paths:
+  /healthz:
+    get:
+      tags: [Healthz]
+      summary: ヘルスチェック用
+      security: []
+      responses:
+        "200":
+          description: 疎通成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Healthz"
+        "500":
+          description: サーバエラー
+  /auth/login:
+    get:
+      tags: [Auth]
+      summary: Redirect to IdP (Google)
+      description: 認可リクエストを生成し、Googleへ302リダイレクト
+      security: [] # ← /auth は認可不要に
+      responses:
+        "302":
+          description: Redirect to Google
+        "500":
+          description: サーバエラー
+
+  /auth/callback:
+    get:
+      tags: [Auth]
+      summary: OIDC callback
+      description: 認可コード受領→トークン取得→セッション発行。完了後フロントへ302
+      security: [] # ← /auth は認可不要に
+      responses:
+        "302":
+          description: Redirect to front-end
+        "500":
+          description: サーバエラー
+
+  /auth/logout:
+    post:
+      tags: [Auth]
+      summary: Logout
+      security:
+        - cookieAuth: []
+        - csrfToken: []
+      responses:
+        "200":
+          description: ログアウト成功（Cookie失効済み）
+        # "302":
+        #   description: Redirect to front-end after logout
+        #   headers:
+        #     Location:
+        #       description: Redirect destination
+        #       schema:
+        #         type: string
+        "401":
+          description: 認証エラー
+          # $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          description: CSRF検証エラー
+  /users/me:
+    get:
+      tags: [Users]
+      summary: ログインユーザー情報を取得（初回は自動登録）
+      responses:
+        "200":
+          description: ユーザー情報
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          description: 認証エラー
+        "404":
+          description: ユーザーデータが見つからない
+        "500":
+          description: サーバエラー
+
+    delete:
+      tags: [Users]
+      summary: ユーザーの退会処理
+      description: ユーザーデータとそのminkanデータを削除
+      security:
+        - cookieAuth: []
+        - csrfToken: []
+      responses:
+        "204":
+          description: 正常に削除
+        "401":
+          description: 認証エラー
+        "403":
+          description: CSRF検証エラー
+        "500":
+          description: サーバエラー
+  /minkan:
+    get:
+      tags: [Minkan]
+      summary: mindmap,kanban,作業中プロジェクトIDの取得
+      description: ログイン後に取得される
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MinkanGetRes"
+        "401":
+          description: 認証エラー
+        "404":
+          description: データが未登録
+        "500":
+          description: サーバエラー
+    put:
+      tags: [Minkan]
+      summary: mindmap,kanban,作業中プロジェクトIDの更新
+      security:
+        - cookieAuth: []
+        - csrfToken: []
+      requestBody:
+        description: 更新用データ
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MinkanPutReq"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MinkanPutRes"
+        "401":
+          description: 認証エラー
+        "403":
+          description: CSRF検証エラー
+        "404":
+          description: データが未登録
+        "409":
+          description: 楽観ロックエラー
+        "500":
+          description: サーバエラー
+
+components:
+  # securitySchemes:
+  #   googleOidc:
+  #     type: openIdConnect
+  #     openIdConnectUrl: https://accounts.google.com/.well-known/openid-configuration
+
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: minkan_session
+
+    csrfToken:
+      type: apiKey
+      in: header
+      name: X-CSRF-Token
+
+  responses:
+    UnauthorizedError:
+      description: Not authenticated
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    ForbiddenError:
+      description: Not authorized
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+  schemas:
+    # --- ユーザー ---
+    Healthz:
+      type: object
+      properties:
+        message:
+          type: string
+      required: [message]
+
+    User:
+      type: object
+      properties:
+        # userId:
+        #   type: string
+        #   format: uuid
+        #   description: アプリ内部のユーザーID（主キー）
+        email:
+          type: string
+          # format: email
+          nullable: true # trueの場合nullを許容
+        # emailVerified:
+        #   type: boolean
+        #   nullable: true
+        displayName:
+          type: string
+          nullable: true
+      required: [email, displayName]
+
+    # --- minkan ---
+    MinkanGetRes:
+      type: object
+      description: Minkan + version(GET/minkanのresボディ)
+      properties:
+        minkan:
+          type: object
+          additionalProperties: true
+          x-go-type: json.RawMessage
+          description: "Raw JSON blob of Minkan state"
+          # $ref: "#/components/schemas/Minkan"
+        version:
+          type: integer
+          format: int32 # 64bitをFEが受けられないため
+          description: 楽観ロック用version
+      required: [minkan, version]
+
+    MinkanPutReq:
+      type: object
+      description: Minkan + version(PUT/minkanのreqボディ)
+      properties:
+        minkan:
+          type: object
+          additionalProperties: true
+          x-go-type: json.RawMessage
+          description: "Raw JSON blob of Minkan state"
+          # $ref: "#/components/schemas/Minkan"
+        version:
+          type: integer
+          format: int32 # 64bitをFEが受けられないため
+          description: 楽観ロック用version
+      required: [minkan, version]
+
+    MinkanPutRes:
+      type: object
+      description: Minkan + version(PUT/minkanのreqボディ)
+      properties:
+        # minkan:
+        # type: object
+        # additionalProperties: true
+        # x-go-type: json.RawMessage
+        # description: "Raw JSON blob of Minkan state"
+        # $ref: "#/components/schemas/Minkan"
+        version:
+          type: integer
+          format: int32 # 64bitをFEが受けられないため
+          description: 楽観ロック用version
+      required: [version]
+
+    # #################
+    # MinkanGet,Put系をadditionalProperties: trueとしたため以降の記載が不要になった
+    # 呼び出されないschemasはapi.gen.goの構造性生成対象外なので、今後のために一応残す
+    # ################
+
+    Minkan:
+      type: object
+      description: mindmap,kanban,作業中プロジェクトIDの状態
+      properties:
+        currentPjId:
+          type: string
+          description: 作業中マインドマッププロジェクトのID
+        projects:
+          $ref: "#/components/schemas/Projects"
+        kanbanIndex:
+          $ref: "#/components/schemas/KanbanIndex"
+        kanbanColumns:
+          $ref: "#/components/schemas/KanbanColumns"
+      required: [currentPjId, projects, kanbanIndex, kanbanColumns]
+
+    Projects:
+      type: object
+      description: pjID -> Project のマップ
+      additionalProperties:
+        $ref: "#/components/schemas/Project"
+
+    Project:
+      type: object
+      additionalProperties: false #記載したプロパティ以外は許容しない
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        nodes:
+          type: array
+          items:
+            $ref: "#/components/schemas/Node"
+        edges:
+          type: array
+          items:
+            $ref: "#/components/schemas/Edge"
+          minItems: 0
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required: [id, name, nodes, edges, createdAt, updatedAt]
+
+    # ==== Node / Edge (XYFlow準拠の最小構成) ====
+    Node:
+      type: object
+      # additionalProperties: false
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+        data:
+          $ref: "#/components/schemas/NodeData"
+        position:
+          type: object
+          properties:
+            x: { type: number }
+            y: { type: number }
+          required: [x, y]
+      required: [id, type, data, position]
+
+    Edge:
+      type: object
+      # additionalProperties: false
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+        source:
+          type: string
+          description: 接続元ノードID
+        target:
+          type: string
+          description: 接続先ノードID
+      required: [id, type, source, target]
+
+    # ==== Nodeの中身 ====
+    NodeData:
+      type: object
+      # additionalProperties: false
+      properties:
+        label:
+          type: string
+        parentId:
+          type: string
+          nullable: true
+        isDone:
+          type: boolean
+        comments:
+          type: array
+          items:
+            $ref: "#/components/schemas/NodeComment"
+      required: [label, isDone, comments]
+
+    NodeComment:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+        content:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, content, createdAt]
+
+    # ==== Kanban ====
+    # Map<string, Set<string>> の代替
+    KanbanIndex:
+      type: object
+      additionalProperties:
+        type: array
+        items: { type: string }
+        uniqueItems: true
+      description: "本来 pjId -> nodeIdのSetだが、Setがないのでstring[]で代替"
+
+    KanbanColumns:
+      type: object
+      additionalProperties: false
+      properties:
+        backlog:
+          type: array
+          items: { $ref: "#/components/schemas/KanbanCardRef" }
+        todo:
+          type: array
+          items: { $ref: "#/components/schemas/KanbanCardRef" }
+        doing:
+          type: array
+          items: { $ref: "#/components/schemas/KanbanCardRef" }
+        done:
+          type: array
+          items: { $ref: "#/components/schemas/KanbanCardRef" }
+      required: [backlog, todo, doing, done]
+      description: 各カラムごとのカード参照配列
+
+    KanbanCardRef:
+      type: object
+      additionalProperties: false
+      properties:
+        pjId: { type: string }
+        nodeId: { type: string }
+      required: [pjId, nodeId]
+
+    # ---エラー---
+    Error:
+      type: object
+      properties:
+        code: { type: string, example: "UNAUTHORIZED" }
+        message: { type: string, example: "authentication required" }
+        details: { type: object, additionalProperties: true }
+      required: [code, message]
