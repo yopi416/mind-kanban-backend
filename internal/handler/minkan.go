@@ -57,12 +57,6 @@ func (s *Server) GetMinkan(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// func (s *Server) PostMinkan(w http.ResponseWriter, r *http.Request) {
-// 	lg := slog.Default().With("handler", "GetMinkan")
-
-// 	http.Error(w, "not implemented", http.StatusNotImplemented)
-// }
-
 // あるユーザーのminkan_statesを置き換え
 func (s *Server) PutMinkan(w http.ResponseWriter, r *http.Request) {
 	lg := slog.Default().With("handler", "PutMinkan")
