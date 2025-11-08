@@ -75,7 +75,12 @@ func realMain() error {
 	if err != nil {
 		return err
 	}
-	defer minkanDB.Close()
+
+	defer func() {
+		if err := minkanDB.Close(); err != nil {
+			slog.Error("failed to close DB", "err", err)
+		}
+	}()
 
 	// api.ServerInterface を取得(http.Serverではないので注意)
 	s, err := handler.NewServer(cfg, minkanDB)

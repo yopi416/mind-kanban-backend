@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"database/sql"
 	"log/slog"
 	"net/http"
 
@@ -39,6 +40,14 @@ func (s *Server) GetAuthLogin(w http.ResponseWriter, r *http.Request) {
 
 }
 
+// エンドポイントではなく、DBロールバック時のユーティリティ関数
+func rollback(lg *slog.Logger, tx *sql.Tx) {
+	if err := tx.Rollback(); err != nil && err != sql.ErrTxDone {
+		lg.Error("rollback error", "err", err)
+	}
+}
+
+// OIDCのcallback先の処理
 func (s *Server) GetAuthCallback(w http.ResponseWriter, r *http.Request) {
 	lg := slog.Default().With("handler", "GetAuthCallback")
 
@@ -106,7 +115,7 @@ func (s *Server) GetAuthCallback(w http.ResponseWriter, r *http.Request) {
 			createdUserID, err := s.UserRepository.CreateUser(r.Context(), tx, &newUser)
 
 			if err != nil {
-				tx.Rollback()
+				rollback(lg, tx)
 				http.Error(w, "internal server error", http.StatusInternalServerError)
 				lg.Error("create user error", "err", err)
 				return
@@ -116,7 +125,7 @@ func (s *Server) GetAuthCallback(w http.ResponseWriter, r *http.Request) {
 			err = s.MinkanStatesRepository.InitState(r.Context(), tx, createdUserID)
 
 			if err != nil {
-				tx.Rollback()
+				rollback(lg, tx)
 				http.Error(w, "internal server error", http.StatusInternalServerError)
 				lg.Error("init minkan_state error", "err", err)
 				return
@@ -124,7 +133,7 @@ func (s *Server) GetAuthCallback(w http.ResponseWriter, r *http.Request) {
 
 			// 3. 1,2のコミット
 			if err := tx.Commit(); err != nil {
-				tx.Rollback()
+				rollback(lg, tx)
 				http.Error(w, "internal server error", http.StatusInternalServerError)
 				lg.Error("transaction commit error", "err", err)
 				return

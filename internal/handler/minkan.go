@@ -80,7 +80,11 @@ func (s *Server) PutMinkan(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// リクエストボディから、minkanデータとversionを取得
-	defer r.Body.Close()
+	defer func() {
+		if err := r.Body.Close(); err != nil {
+			lg.Error("failed to close request body", "err", err)
+		}
+	}()
 
 	var reqBody api.MinkanPutReq
 	err := json.NewDecoder(r.Body).Decode(&reqBody)
