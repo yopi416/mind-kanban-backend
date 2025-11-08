@@ -16,6 +16,7 @@ type Server struct {
 	RedirectURLAfterLogin  string
 	RedirectURLAfterLogout string
 	UserRepository         *repository.UserRepository
+	MinkanStatesRepository *repository.MinkanStatesRepository
 }
 
 func NewServer(cfg *configs.ConfigList, db *sql.DB) (*Server, error) {
@@ -26,6 +27,7 @@ func NewServer(cfg *configs.ConfigList, db *sql.DB) (*Server, error) {
 
 	sm := session.NewSessionManager(cfg.SessionTTL)
 	userRepo := repository.NewUserRepository(db)
+	minkanStateRepo := repository.NewMinkanStatesRepository(db)
 
 	return &Server{
 		OIDC:                   oidc,
@@ -33,5 +35,6 @@ func NewServer(cfg *configs.ConfigList, db *sql.DB) (*Server, error) {
 		RedirectURLAfterLogin:  cfg.RedirectURLAfterLogin,
 		RedirectURLAfterLogout: cfg.RedirectURLAfterLogout,
 		UserRepository:         userRepo,
+		MinkanStatesRepository: minkanStateRepo,
 	}, nil
 }

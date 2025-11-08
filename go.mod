@@ -8,7 +8,7 @@ require (
 	github.com/getkin/kin-openapi v0.132.0
 	github.com/go-sql-driver/mysql v1.9.3
 	github.com/google/uuid v1.6.0
-	github.com/oapi-codegen/runtime v1.1.2
+	github.com/matoous/go-nanoid/v2 v2.1.0
 	github.com/zitadel/oidc/v3 v3.45.0
 )
 

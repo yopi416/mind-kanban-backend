@@ -23,6 +23,30 @@ func NewUserRepository(DB *sql.DB) *UserRepository {
 	return &UserRepository{DB: DB}
 }
 
+// 新規ユーザーを登録し、生成された user_id を返す
+// 同トランザクションにて、minkan_state テーブルの初期化を行うのでtxを引数に
+func (ur *UserRepository) CreateUser(ctx context.Context, tx *sql.Tx, user *User) (int64, error) {
+	// user_idはAuto Incrementなので未登録でOK
+	query := `
+		INSERT INTO users (oidc_iss, oidc_sub, display_name, email, email_verified)
+		VALUES (?, ?, ?, ?, ?)
+	`
+
+	res, err := tx.ExecContext(ctx, query,
+		user.OIDCIss, user.OIDCSub, user.DisplayName, user.Email, user.EmailVerified,
+	)
+	if err != nil {
+		return 0, err
+	}
+
+	// 主キー（userIDを取得）を取得
+	userID, err := res.LastInsertId()
+	if err != nil {
+		return 0, err
+	}
+	return userID, nil
+}
+
 // oidcのiss, subからuserDataを探す
 // 見つからない場合、return, nil, nil
 func (ur *UserRepository) FindUserByOIDC(ctx context.Context, oidcIss, oidcSub string) (*User, error) {
@@ -83,29 +107,6 @@ func (ur *UserRepository) FindUserByUserID(ctx context.Context, userID int64) (*
 		return nil, err
 	}
 	return user, nil
-}
-
-// 新規ユーザーを登録し、生成された user_id を返す
-func (ur *UserRepository) CreateUser(ctx context.Context, user *User) (int64, error) {
-	// user_idはAuto Incrementなので未登録でOK
-	query := `
-		INSERT INTO users (oidc_iss, oidc_sub, display_name, email, email_verified)
-		VALUES (?, ?, ?, ?, ?)
-	`
-
-	res, err := ur.DB.ExecContext(ctx, query,
-		user.OIDCIss, user.OIDCSub, user.DisplayName, user.Email, user.EmailVerified,
-	)
-	if err != nil {
-		return 0, err
-	}
-
-	// 主キー（userIDを取得）を取得
-	userID, err := res.LastInsertId()
-	if err != nil {
-		return 0, err
-	}
-	return userID, nil
 }
 
 // 最終ログイン日時を現在時刻で更新

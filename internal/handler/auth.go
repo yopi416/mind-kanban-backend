@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"database/sql"
 	"log/slog"
 	"net/http"
 
@@ -39,6 +40,14 @@ func (s *Server) GetAuthLogin(w http.ResponseWriter, r *http.Request) {
 
 }
 
+// エンドポイントではなく、DBロールバック時のユーティリティ関数
+func rollback(lg *slog.Logger, tx *sql.Tx) {
+	if err := tx.Rollback(); err != nil && err != sql.ErrTxDone {
+		lg.Error("rollback error", "err", err)
+	}
+}
+
+// OIDCのcallback先の処理
 func (s *Server) GetAuthCallback(w http.ResponseWriter, r *http.Request) {
 	lg := slog.Default().With("handler", "GetAuthCallback")
 
@@ -85,8 +94,17 @@ func (s *Server) GetAuthCallback(w http.ResponseWriter, r *http.Request) {
 
 		var foundUserID int64
 
-		// ユーザーがnilの場合（未登録）、ユーザーを新規作成
+		// ユーザーがnilの場合（未登録）、ユーザーを新規作成し、初期minkanデータを登録
 		if user == nil {
+			tx, err := s.UserRepository.DB.BeginTx(r.Context(), nil)
+
+			if err != nil {
+				http.Error(w, "internal server error", http.StatusInternalServerError)
+				lg.Error("begin tx error", "err", err)
+				return
+			}
+
+			// 1. ユーザーの新規作成
 			newUser := repository.User{
 				OIDCIss:       iss,
 				OIDCSub:       sub,
@@ -94,11 +112,30 @@ func (s *Server) GetAuthCallback(w http.ResponseWriter, r *http.Request) {
 				Email:         email,
 				EmailVerified: bool(emailVerified),
 			}
-			createdUserID, err := s.UserRepository.CreateUser(r.Context(), &newUser)
+			createdUserID, err := s.UserRepository.CreateUser(r.Context(), tx, &newUser)
 
 			if err != nil {
-				http.Error(w, "failed to create user", http.StatusInternalServerError)
+				rollback(lg, tx)
+				http.Error(w, "internal server error", http.StatusInternalServerError)
 				lg.Error("create user error", "err", err)
+				return
+			}
+
+			// 2. minkan_stateの初期化
+			err = s.MinkanStatesRepository.InitState(r.Context(), tx, createdUserID)
+
+			if err != nil {
+				rollback(lg, tx)
+				http.Error(w, "internal server error", http.StatusInternalServerError)
+				lg.Error("init minkan_state error", "err", err)
+				return
+			}
+
+			// 3. 1,2のコミット
+			if err := tx.Commit(); err != nil {
+				rollback(lg, tx)
+				http.Error(w, "internal server error", http.StatusInternalServerError)
+				lg.Error("transaction commit error", "err", err)
 				return
 			}
 
