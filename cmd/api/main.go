@@ -94,8 +94,9 @@ func realMain() error {
 
 	// ミドルウェア適用
 	handlerWithMW := middleware.RequireLogin(mux, middleware.RequireLoginOptions{
-		SessionManager:   s.SessionManager,
-		SkipPaths:        []string{"/v1/healthz", "/v1/auth/"},
+		SessionManager: s.SessionManager,
+		// 本番EC2では/v1/authにするとr.URL.pathの部分一致の不具合になるのでフルパス記載
+		SkipPaths:        []string{"/v1/healthz", "/v1/auth/login", "/v1/auth/callback"},
 		RequireCSRFToken: true,
 		OnUnauthorized:   nil, // デフォルトを利用
 	})
