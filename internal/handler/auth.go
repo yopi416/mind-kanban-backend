@@ -166,9 +166,9 @@ func (s *Server) GetAuthCallback(w http.ResponseWriter, r *http.Request) {
 			Name:     "session_id",
 			Value:    sessionID,
 			Path:     "/",
-			HttpOnly: true,  // jsから読み取れないようにする
-			Secure:   false, // ← HTTPS 運用時は true に
-			SameSite: http.SameSiteLaxMode,
+			HttpOnly: true, // jsから読み取れないようにする
+			Secure:   true, // ← HTTPS 運用時は true に
+			SameSite: http.SameSiteNoneMode,
 			MaxAge:   int(sessionTTL.Seconds()), // ブラウザ閉後もCookieをキープ
 		})
 
@@ -179,9 +179,10 @@ func (s *Server) GetAuthCallback(w http.ResponseWriter, r *http.Request) {
 			Name:     "csrf_token",
 			Value:    csrfToken,
 			Path:     "/",
-			HttpOnly: false,                // (JS)が読めるように
-			Secure:   false,                // 本番は true（HTTPS）
-			SameSite: http.SameSiteLaxMode, // 運用に応じて
+			HttpOnly: false,                 // (JS)が読めるように
+			Secure:   true,                  // 本番は true（HTTPS）
+			SameSite: http.SameSiteNoneMode, // 運用に応じて
+			Domain:   "mindmap-kanban.com",  // FEのdocument.Cookieで読めるように
 			MaxAge:   int(sessionTTL.Seconds()),
 		})
 
@@ -233,9 +234,9 @@ func (s *Server) PostAuthLogout(w http.ResponseWriter, r *http.Request) {
 		Name:     "session_id",
 		Value:    "",
 		Path:     "/",
-		HttpOnly: true,
-		Secure:   false, // 本番は true
-		SameSite: http.SameSiteLaxMode,
+		HttpOnly: true, // jsから読み取れないようにする
+		Secure:   true, // ← HTTPS 運用時は true に
+		SameSite: http.SameSiteNoneMode,
 		MaxAge:   -1,
 	})
 
@@ -244,8 +245,9 @@ func (s *Server) PostAuthLogout(w http.ResponseWriter, r *http.Request) {
 		Value:    "",
 		Path:     "/",
 		HttpOnly: false,
-		Secure:   false, // 本番は true
-		SameSite: http.SameSiteLaxMode,
+		Secure:   true, // 本番は true
+		SameSite: http.SameSiteNoneMode,
+		Domain:   "mindmap-kanban.com",
 		MaxAge:   -1,
 	})
 

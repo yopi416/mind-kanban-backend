@@ -33,8 +33,13 @@ func NewOIDCFromEnv(cfg *configs.ConfigList) (*OIDC, error) {
 	}
 
 	// state 値や PKCE の code_verifier, セッション情報を暗号化・署名付き Cookieとして保管
-	// 一旦 HTTPで開発するためunsecureにするが後程変更
-	cookieHandler := httphelper.NewCookieHandler(cookieKey, cookieKey, httphelper.WithUnsecure())
+	// SPA + API構成なので、SameSite:None + Secure設定にする（おそらく必須）
+	cookieHandler := httphelper.NewCookieHandler(
+		cookieKey,
+		cookieKey,
+		httphelper.WithSameSite(http.SameSiteNoneMode), // None + Secure
+		// httphelper.WithUnsecure(), // HTTPS対応したら削除
+	)
 
 	// HTTPクライアント準備
 	httpClient := &http.Client{

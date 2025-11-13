@@ -48,6 +48,8 @@ func RequireLogin(next http.Handler, opt RequireLoginOptions) http.Handler {
 
 		// ログイン検証除外パスも素通し
 		for _, skipPath := range opt.SkipPaths {
+			// lg.Info("path debug", "r.URL.Path", r.URL.Path, "check ok", strings.HasPrefix(r.URL.Path, skipPath))
+
 			if strings.HasPrefix(r.URL.Path, skipPath) {
 				next.ServeHTTP(w, r)
 				return

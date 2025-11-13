@@ -26,5 +26,5 @@ func (s *Server) GetHealthz(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 正常時は Info ログを出力
-	lg.Info("health check ok")
+	// lg.Info("health check ok")
 }
