@@ -51,18 +51,6 @@ logs:
 # DB関連
 # ################
 
-DB_CONTAINER_NAME = minkan-mysql # コンテナ名
-DB_USER_NAME = app
-DB_PASSWORD = password
-DB_DATABASE = minkan
-
-connect-db:
-	docker exec -it $(DB_CONTAINER_NAME) \
-		mysql -u$(DB_USER_NAME) -p$(DB_PASSWORD) $(DB_DATABASE)
-
-connect-db-root:
-	docker exec -it $(DB_CONTAINER_NAME) mysql
-
 
 # ################
 # OpenAPI
