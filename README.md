@@ -16,11 +16,9 @@ https://docs.google.com/presentation/d/1KLZ43FPNCTKcYka_5uqseI69ziR3VVaa15CUOSt6
 
 > 動作イメージ・機能
 
-https://drive.google.com/file/d/10dDOswrx0erzBTTzMRiClXx8ac2xo5kj/view?usp=sharing　　
+以下の動画から操作イメージをご覧いただけます：
 
-<iframe src="https://drive.google.com/file/d/10dDOswrx0erzBTTzMRiClXx8ac2xo5kj/preview"
-        style="width:100%;aspect-ratio:16/9;" allow="autoplay">
-</iframe>
+▶ [ミンカン_プロダクト紹介.mp4](assets/ミンカン_プロダクト紹介.mp4)
 
 <!-- <video src="動画ファイルパス.mp4" controls width="600"></video> -->
 
