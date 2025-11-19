@@ -4,31 +4,36 @@
 マインドマップとカンバンボードを連携させた、個人用タスク管理ツール「ミンカン」を開発しました。
 マインドマップの「構造化」とカンバンボードの「進行管理」の長所を併せ持つため、タスクの全体像を俯瞰しながら、実行順や状態（着手中／待ち／完了 など）を一貫して管理できます。
 
-サービスは以下のリンクから利用可能です。
+サービスは以下のリンクから利用可能です。<br/>
 ▶ [ミンカンアプリURL](https://www.mindmap-kanban.com/)
+<br/>
 <br/>
 
 
 > 開発背景
 
-開発背景を以下のリンク先のGoogleスライドで説明しています。
+開発背景を以下のリンク先のGoogleスライドで説明しています。<br/>
 ▶ [開発背景_スライド](https://docs.google.com/presentation/d/1KLZ43FPNCTKcYka_5uqseI69ziR3VVaa15CUOSt6Is0/edit?usp=sharing
 )
 <br/>
+<br/>
+
 
 
 > 動作イメージ・機能
 
-以下の動画から利用イメージ・その他機能をご覧いただけます
-▶ [ミンカン_利用イメージ.mp4](https://drive.google.com/file/d/10dDOswrx0erzBTTzMRiClXx8ac2xo5kj/view?usp=drive_link)
+以下の動画から利用イメージ・その他機能をご覧いただけます<br/>
+▶ [ミンカン_利用イメージ.mp4](https://drive.google.com/file/d/10dDOswrx0erzBTTzMRiClXx8ac2xo5kj/view?usp=drive_link)<br/>
 ▶ [ミンカン_その他機能.mp4](https://drive.google.com/file/d/1nhqyQ9MFGUwR5_mtTHsjOyMazjuckovQ/view?usp=sharing)
+<br/>
 <br/>
 
 
 > github リポジトリ 
 
-▶ [フロントエンド(Typescript/React/Tailwind/React Flow)](https://github.com/yopi416/mind-kanban-web)
+▶ [フロントエンド(Typescript/React/Tailwind/React Flow)](https://github.com/yopi416/mind-kanban-web)<br/>
 ▶ [バックエンド(Go)](https://github.com/yopi416/mind-kanban-backend)
+<br/>
 <br/>
 
 
